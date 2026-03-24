@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Assistant Study</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --bg:       #1a1a1a;
+  --bg2:      #242424;
+  --bg3:      #2e2e2e;
+  --border:   #3a3a3a;
+  --text:     #e8e8e8;
+  --text2:    #999;
+  --text3:    #666;
+  --accent:   #10a37f;
+  --acc-h:    #0d8c6d;
+  --radius:   12px;
+  --radius-s: 8px;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; height:100vh; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ── CARD SCREENS (privacy + task) ── */
+.card-screen {
+  align-items:center;
+  justify-content:center;
+  background:var(--bg);
+  padding:24px;
+}
+
+.card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:40px 44px;
+  max-width:540px;
+  width:100%;
+  box-shadow:0 24px 60px rgba(0,0,0,0.5);
+}
+
+.card-logo {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:28px;
+}
+
+.card-logo-icon {
+  width:34px;height:34px;
+  background:var(--accent);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.card-logo-icon svg { width:18px;height:18px;fill:white; }
+.card-logo-text { font-size:16px;font-weight:600; }
+.card h2 { font-size:20px;font-weight:600;margin-bottom:14px; }
+.card .sub { font-size:13px;color:var(--text2);margin-bottom:22px; }
+
+.card-body {
+  font-size:13.5px;
+  color:var(--text2);
+  line-height:1.75;
+  margin-bottom:26px;
+  padding:16px;
+  background:var(--bg3);
+  border-radius:var(--radius-s);
+  border-left:3px solid var(--accent);
+}
+
+.rules { margin-bottom:24px; }
+.rules h3 {
+  font-size:11px;font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:10px;
+}
+.rules ul { list-style:none;display:flex;flex-direction:column;gap:7px; }
+.rules ul li {
+  font-size:13px;color:var(--text2);
+  display:flex;align-items:flex-start;gap:8px;
+}
+.rules ul li::before { content:"→";color:var(--accent);flex-shrink:0; }
+
+.btn {
+  width:100%;padding:13px 20px;
+  background:var(--accent);color:white;
+  border:none;border-radius:var(--radius-s);
+  font-size:14px;font-weight:500;
+  cursor:pointer;transition:background .2s;
+  font-family:inherit;
+}
+.btn:hover { background:var(--acc-h); }
+
+/* ── CHAT SCREEN ── */
+#screen-chat {
+  flex-direction:column;
+  height:100vh;overflow:hidden;
+}
+
+/* top bar */
+.top-bar {
+  padding:9px 18px;
+  font-size:12.5px;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
+}
+.top-bar.pc-low {
+  background:#2d1515;
+  border-bottom:1px solid #5a2020;
+  color:#fca5a5;
+}
+.top-bar.pc-high {
+  background:#0f2a1f;
+  border-bottom:1px solid #1a4d36;
+  color:#6ee7b7;
+}
+.top-bar svg { width:14px;height:14px;flex-shrink:0; }
+
+/* chat header */
+.chat-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;
+}
+.chat-header-left { display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px; }
+.chat-header-icon {
+  width:26px;height:26px;background:var(--accent);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+}
+.chat-header-icon svg { width:14px;height:14px;fill:white; }
+.model-pill {
+  font-size:11px;color:var(--text3);
+  background:var(--bg3);padding:3px 10px;
+  border-radius:20px;border:1px solid var(--border);
+}
+
+/* main area */
+.chat-main {
+  display:flex;flex:1;overflow:hidden;
+}
+
+/* messages */
+.messages {
+  flex:1;overflow-y:auto;
+  padding:20px 0;scroll-behavior:smooth;
+}
+.messages::-webkit-scrollbar { width:5px; }
+.messages::-webkit-scrollbar-track { background:transparent; }
+.messages::-webkit-scrollbar-thumb { background:var(--border);border-radius:3px; }
+
+.msg-row {
+  display:flex;gap:12px;
+  padding:8px 18px;
+  max-width:740px;margin:0 auto;width:100%;
+  animation:fadeIn .3s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
+
+.msg-row.user { justify-content:flex-end; }
+
+.avatar {
+  width:30px;height:30px;border-radius:50%;
+  flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:600;
+  margin-top:2px;
+}
+.avatar.ai   { background:var(--accent);color:white; }
+.avatar.user { background:#6d4fc2;color:white; }
+
+.bubble { max-width:580px; }
+.bubble .name { font-size:12px;font-weight:600;margin-bottom:4px; }
+.bubble .text { font-size:13.5px;line-height:1.75;color:var(--text); }
+
+.bubble.user-bubble {
+  background:var(--bg3);
+  border-radius:var(--radius);
+  padding:10px 14px;
+  border:1px solid var(--border);
+}
+
+/* typing dots */
+.typing { display:flex;gap:4px;align-items:center;padding:6px 0; }
+.typing span {
+  width:6px;height:6px;border-radius:50%;
+  background:var(--text3);
+  animation:bounce 1.2s infinite ease-in-out;
+}
+.typing span:nth-child(2) { animation-delay:.2s; }
+.typing span:nth-child(3) { animation-delay:.4s; }
+@keyframes bounce {
+  0%,60%,100%{transform:translateY(0);opacity:.4;}
+  30%{transform:translateY(-6px);opacity:1;}
+}
+
+/* input area */
+.input-area {
+  border-top:1px solid var(--border);
+  background:var(--bg);
+  padding:12px 18px 16px;
+  flex-shrink:0;
+}
+.input-wrap {
+  max-width:740px;margin:0 auto;
+  display:flex;gap:10px;align-items:flex-end;
+}
+.input-wrap textarea {
+  flex:1;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:10px 14px;
+  color:var(--text);
+  font-family:inherit;
+  font-size:13.5px;
+  line-height:1.6;
+  resize:none;
+  outline:none;
+  max-height:120px;
+  transition:border-color .2s;
+}
+.input-wrap textarea:focus { border-color:var(--accent); }
+.input-wrap textarea::placeholder { color:var(--text3); }
+.send-btn {
+  width:38px;height:38px;flex-shrink:0;
+  background:var(--accent);border:none;border-radius:var(--radius-s);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;
+}
+.send-btn:hover { background:var(--acc-h); }
+.send-btn:disabled { background:var(--bg3);cursor:not-allowed; }
+.send-btn svg { width:16px;height:16px;fill:white; }
+.input-hint {
+  max-width:740px;margin:6px auto 0;
+  font-size:11px;color:var(--text3);text-align:center;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:200px;flex-shrink:0;
+  border-left:1px solid var(--border);
+  background:var(--bg2);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sidebar.hidden { display:none; }
+
+.sid-header {
+  padding:12px 14px 8px;
+  font-size:10px;font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;letter-spacing:.06em;
+  display:flex;align-items:center;gap:6px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sid-pulse {
+  width:6px;height:6px;border-radius:50%;
+  background:#ef4444;
+  animation:pulse 1.4s infinite;
+  flex-shrink:0;
+}
+@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:.2;} }
+
+.sid-body { flex:1;overflow-y:auto;padding:12px 14px; }
+
+.profile-avatar {
+  width:40px;height:40px;border-radius:50%;
+  background:#3a1a1a;border:2px solid #ef4444;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:600;color:#fca5a5;
+  margin-bottom:12px;
+}
+
+.attr-item {
+  display:flex;align-items:flex-start;gap:7px;
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+  opacity:0;transform:translateY(4px);
+  transition:opacity .4s,transform .4s;
+  font-size:12px;
+}
+.attr-item.show { opacity:1;transform:translateY(0); }
+.attr-item .icon { font-size:13px;flex-shrink:0;width:16px; }
+.attr-item .attr-content { flex:1; }
+.attr-item .attr-label { color:var(--text3);font-size:11px; }
+.attr-item .attr-val { color:var(--text);font-weight:500;font-size:12px; }
+
+.sid-divider {
+  border:none;border-top:1px solid var(--border);
+  margin:10px 0;
+}
+
+.radar-label {
+  font-size:10px;color:var(--text3);
+  text-align:center;margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+
+/* ── COMPLETE SCREEN ── */
+#screen-complete {
+  align-items:center;justify-content:center;
+  background:var(--bg);padding:24px;
+}
+.complete-card {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:48px 44px;
+  max-width:480px;width:100%;
+  text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,0.5);
+}
+.complete-icon {
+  width:54px;height:54px;
+  background:rgba(16,163,127,.12);
+  border:2px solid var(--accent);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+}
+.complete-icon svg { width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:2.5; }
+.complete-card h2 { font-size:21px;font-weight:600;margin-bottom:10px; }
+.complete-card p { font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:26px; }
+.redirect-note { font-size:12px;color:var(--text3);margin-top:12px; }
+.redirect-note span { color:var(--accent);font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SCREEN 1: PRIVACY NOTICE
+══════════════════════════════ -->
+<div id="screen-privacy" class="screen card-screen active">
+  <div class="card">
+    <div class="card-logo">
+      <div class="card-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      </div>
+      <span class="card-logo-text">ChatAI Assistant</span>
+    </div>
+    <h2 id="privacy-title">Data Notice</h2>
+    <div class="card-body" id="privacy-body"></div>
+    <button class="btn" onclick="goToTask()">I understand, proceed →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 2: TASK INSTRUCTIONS
+══════════════════════════════ -->
+<div id="screen-task" class="screen card-screen">
+  <div class="card">
+    <div class="card-logo">
+      <div class="card-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      </div>
+      <span class="card-logo-text">ChatAI Assistant</span>
+    </div>
+    <h2>Before You Begin</h2>
+    <p class="sub">Please read the following instructions carefully.</p>
+    <div class="card-body">
+      You will have a short conversation with an AI assistant. The AI will ask you a few questions. Please answer naturally and honestly. After the conversation you will be asked to complete a brief survey about your experience.
+    </div>
+    <div class="rules">
+      <h3>Guidelines</h3>
+      <ul>
+        <li>Type your answers freely in your own words.</li>
+        <li>The conversation will last 4 exchanges.</li>
+        <li>Please stay on topic with the AI's questions.</li>
+        <li>There are no right or wrong answers.</li>
+      </ul>
+    </div>
+    <button class="btn" onclick="goToChat()">Begin Conversation →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 3: CHAT
+══════════════════════════════ -->
+<div id="screen-chat" class="screen">
+
+  <!-- Top bar: confidentiality manipulation -->
+  <div class="top-bar" id="top-bar">
+    <svg id="top-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path id="top-icon-path" d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v3m0 2v.5"/>
+    </svg>
+    <span id="top-bar-text"></span>
+  </div>
+
+  <!-- Chat header -->
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <div class="chat-header-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      </div>
+      ChatAI Assistant
+    </div>
+    <div class="model-pill">GPT-4o</div>
+  </div>
+
+  <!-- Main area: chat + sidebar -->
+  <div class="chat-main">
+
+    <!-- Messages -->
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <div class="input-wrap">
+          <textarea id="user-input" rows="1" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
+            <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+          </button>
+        </div>
+        <div class="input-hint" id="input-hint">Exchange <span id="turn-display">1</span> of 4</div>
+      </div>
+    </div>
+
+    <!-- Profiling Sidebar (High PR only) -->
+    <div class="sidebar hidden" id="sidebar">
+      <div class="sid-header">
+        <div class="sid-pulse"></div>
+        Profile building...
+      </div>
+      <div class="sid-body">
+        <div class="profile-avatar" id="profile-avatar">U</div>
+
+        <div class="attr-item" id="attr-1">
+          <span class="icon" id="attr-1-icon"></span>
+          <div class="attr-content">
+            <div class="attr-label" id="attr-1-label"></div>
+            <div class="attr-val" id="attr-1-val">—</div>
+          </div>
+        </div>
+        <div class="attr-item" id="attr-2">
+          <span class="icon" id="attr-2-icon"></span>
+          <div class="attr-content">
+            <div class="attr-label" id="attr-2-label"></div>
+            <div class="attr-val" id="attr-2-val">—</div>
+          </div>
+        </div>
+        <div class="attr-item" id="attr-3">
+          <span class="icon" id="attr-3-icon"></span>
+          <div class="attr-content">
+            <div class="attr-label" id="attr-3-label"></div>
+            <div class="attr-val" id="attr-3-val">—</div>
+          </div>
+        </div>
+        <div class="attr-item" id="attr-4">
+          <span class="icon" id="attr-4-icon"></span>
+          <div class="attr-content">
+            <div class="attr-label" id="attr-4-label"></div>
+            <div class="attr-val" id="attr-4-val">—</div>
+          </div>
+        </div>
+
+        <hr class="sid-divider">
+        <div class="radar-label">Inferred profile</div>
+        <canvas id="radar-chart" width="168" height="150" style="display:block;margin:0 auto;"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 4: COMPLETE
+══════════════════════════════ -->
+<div id="screen-complete" class="screen card-screen">
+  <div class="complete-card">
+    <div class="complete-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <h2>Conversation Complete</h2>
+    <p>Thank you for completing the AI interaction. You will now be redirected to a brief survey about your experience. Please answer based on the conversation you just had.</p>
+    <button class="btn" onclick="goToQualtrics()">Continue to Survey →</button>
+    <div class="redirect-note">Redirecting automatically in <span id="countdown">5</span> seconds...</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+
+// ══════════════════════════════════
+//  !! CHANGE THESE TWO VALUES !!
+// ══════════════════════════════════
+var OPENAI_API_KEY   = "sk-YOUR-OPENAI-KEY-HERE";
+var QUALTRICS_URL    = "https://YOUR-QUALTRICS-LINK-HERE";
+// ══════════════════════════════════
+
+// ── CONDITION MAP ──
+var CONDITIONS = {
+  1:{pr:"low", ds:"low", pc:"low"},
+  2:{pr:"low", ds:"low", pc:"high"},
+  3:{pr:"low", ds:"high",pc:"low"},
+  4:{pr:"low", ds:"high",pc:"high"},
+  5:{pr:"high",ds:"low", pc:"low"},
+  6:{pr:"high",ds:"low", pc:"high"},
+  7:{pr:"high",ds:"high",pc:"low"},
+  8:{pr:"high",ds:"high",pc:"high"}
+};
+
+// ── SYSTEM PROMPTS ──
+var SYSTEM_PROMPTS = {
+  low: `You are a friendly conversational AI assistant.
+Your job is to get to know the user through a simple lighthearted conversation.
+
+Ask exactly one question per turn in this exact order:
+- Turn 1: "Hi! I am your AI assistant. To get to know you better — what is your favourite animal?"
+- Turn 2: "Thank you for sharing. What is your favourite time of day — morning, afternoon, or night?"
+- Turn 3: "That is helpful to know. What is your favourite season of the year?"
+- Turn 4: "Great, thank you. What is your favourite colour?"
+
+After each user response:
+- Acknowledge in one short warm sentence only.
+- Then ask the next question immediately.
+
+If the user goes off-topic:
+- Say: "I can only chat about one thing at a time — [repeat the current question]."
+- Do this once only, then move to next question.
+
+If the user refuses to answer:
+- Say: "No problem at all — [ask next question]."
+- Move on immediately without pressing further.
+
+If the user gives nonsensical or very short input:
+- Say: "I did not quite catch that — [repeat current question once]."
+- If still nonsensical, move to next question.
+
+Never ask follow-up questions.
+Never deviate from the four questions.
+Never comment on answers beyond one short sentence.
+
+After Turn 4 say exactly this and nothing else:
+"Thank you so much for chatting with me today! Please click the button below to continue."`,
+
+  high: `You are a friendly conversational AI assistant.
+Your job is to get to know the user through a simple personal conversation.
+
+Ask exactly one question per turn in this exact order:
+- Turn 1: "Hi! I am your AI assistant. To get to know you better — which city are you currently living in?"
+- Turn 2: "Thank you for sharing. What is your current monthly income range?"
+- Turn 3: "That is helpful to know. Do you currently have any outstanding loans or debts?"
+- Turn 4: "Great, thank you. Are you currently taking any prescription medications on a regular basis?"
+
+After each user response:
+- Acknowledge in one short warm sentence only.
+- Then ask the next question immediately.
+
+If the user goes off-topic:
+- Say: "I can only chat about one thing at a time — [repeat the current question]."
+- Do this once only, then move to next question.
+
+If the user refuses to answer:
+- Say: "No problem at all — [ask next question]."
+- Move on immediately without pressing further.
+
+If the user gives nonsensical or very short input:
+- Say: "I did not quite catch that — [repeat current question once]."
+- If still nonsensical, move to next question.
+
+Never ask follow-up questions.
+Never deviate from the four questions.
+Never comment on answers beyond one short sentence.
+
+After Turn 4 say exactly this and nothing else:
+"Thank you so much for chatting with me today! Please click the button below to continue."`
+};
+
+// ── PROFILE SIDEBAR DATA ──
+var PROFILE_ATTRS = {
+  low: [
+    {icon:"🐾", label:"Favourite animal",      radarLabel:"Animal"},
+    {icon:"🕐", label:"Favourite time of day",  radarLabel:"Time pref"},
+    {icon:"🌤", label:"Favourite season",        radarLabel:"Season"},
+    {icon:"🎨", label:"Favourite colour",        radarLabel:"Colour"}
+  ],
+  high: [
+    {icon:"📍", label:"Location",               radarLabel:"Location"},
+    {icon:"💰", label:"Monthly income",          radarLabel:"Income"},
+    {icon:"📊", label:"Debt status",             radarLabel:"Debt"},
+    {icon:"💊", label:"Medication",              radarLabel:"Health"}
+  ]
+};
+
+var RADAR_COLORS = {
+  low:  {fill:"rgba(29,158,117,0.15)", stroke:"rgba(29,158,117,0.85)"},
+  high: {fill:"rgba(239,68,68,0.15)",  stroke:"rgba(239,68,68,0.85)"}
+};
+
+// ── STATE ──
+var condition  = 1;
+var config     = {};
+var messages   = [];   // OpenAI message history
+var userTurns  = 0;    // how many times user has sent a message
+var isWaiting  = false;
+var radarChart = null;
+var userAnswers = ["","","",""];
+
+// ── INIT ──
+function init() {
+  var params  = new URLSearchParams(window.location.search);
+  var condNum = parseInt(params.get("condition")) || 1;
+  condition   = Math.min(Math.max(condNum,1),8);
+  config      = CONDITIONS[condition];
+
+  // Privacy notice
+  var privacyData = {
+    low: {
+      title: "Data Notice",
+      body:  "Your conversation may be used to improve our services and shared with our partner network. Data handling practices are subject to our standard terms of service."
+    },
+    high: {
+      title: "Privacy Guarantee",
+      body:  "Your conversation is fully private and encrypted. No data is stored or shared with anyone. All conversation data is permanently deleted when this session ends."
+    }
+  };
+  document.getElementById("privacy-title").textContent = privacyData[config.pc].title;
+  document.getElementById("privacy-body").textContent  = privacyData[config.pc].body;
+
+  // Sidebar attributes
+  var attrs = PROFILE_ATTRS[config.ds];
+  for(var i=1;i<=4;i++){
+    document.getElementById("attr-"+i+"-icon").textContent  = attrs[i-1].icon;
+    document.getElementById("attr-"+i+"-label").textContent = attrs[i-1].label;
+  }
+}
+
+// ── NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+  document.getElementById(id).classList.add("active");
+}
+
+function goToTask() { showScreen("screen-task"); }
+
+function goToChat() {
+  showScreen("screen-chat");
+  setupTopBar();
+  setupSidebar();
+  initRadarChart();
+  startConversation();
+}
+
+// ── TOP BAR ──
+function setupTopBar() {
+  var tb  = document.getElementById("top-bar");
+  var txt = document.getElementById("top-bar-text");
+  var ico = document.getElementById("top-icon-path");
+
+  if(config.pc === "low") {
+    tb.className = "top-bar pc-low";
+    txt.textContent = "Your conversation may be used to improve our services and shared with our partner network.";
+    ico.setAttribute("d","M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v3m0 2v.5");
+  } else {
+    tb.className = "top-bar pc-high";
+    txt.textContent = "Your conversation is fully private and encrypted. No data is stored or shared with anyone.";
+    ico.setAttribute("d","M8 2a2.5 2.5 0 00-2.5 2.5V6H4.5A1.5 1.5 0 003 7.5v5A1.5 1.5 0 004.5 14h7a1.5 1.5 0 001.5-1.5v-5A1.5 1.5 0 0011.5 6h-1V4.5A2.5 2.5 0 008 2zm0 1.5A1 1 0 019 4.5V6H7V4.5A1 1 0 018 3.5z");
+  }
+}
+
+// ── SIDEBAR ──
+function setupSidebar() {
+  var sb = document.getElementById("sidebar");
+  if(config.pr === "high") {
+    sb.classList.remove("hidden");
+  } else {
+    sb.classList.add("hidden");
+  }
+}
+
+// ── RADAR CHART ──
+function initRadarChart() {
+  if(config.pr !== "high") return;
+
+  var attrs  = PROFILE_ATTRS[config.ds];
+  var labels = attrs.map(function(a){return a.radarLabel;});
+  var colors = RADAR_COLORS[config.ds];
+
+  var ctx = document.getElementById("radar-chart").getContext("2d");
+  radarChart = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels: labels,
+      datasets:[{
+        data: [0,0,0,0],
+        backgroundColor: colors.fill,
+        borderColor:     colors.stroke,
+        borderWidth: 1.5,
+        pointBackgroundColor: colors.stroke,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: { r: {
+        min:0, max:10,
+        ticks:{ display:false, stepSize:2 },
+        pointLabels:{ font:{size:9,family:"DM Sans"}, color:"#666" },
+        grid:{ color:"rgba(255,255,255,0.08)" },
+        angleLines:{ color:"rgba(255,255,255,0.08)" }
+      }},
+      plugins:{ legend:{ display:false } },
+      animation:{ duration:600 }
+    }
+  });
+}
+
+// ── UPDATE SIDEBAR after user turn ──
+function updateSidebar(turnNumber, userAnswer) {
+  if(config.pr !== "high") return;
+
+  // show attribute card
+  var attrEl = document.getElementById("attr-"+turnNumber);
+  var valEl  = document.getElementById("attr-"+turnNumber+"-val");
+  if(attrEl && valEl) {
+    // truncate long answers
+    var display = userAnswer.length > 20 ? userAnswer.substring(0,18)+"..." : userAnswer;
+    valEl.textContent = display || "—";
+    setTimeout(function(){ attrEl.classList.add("show"); }, 200);
+  }
+
+  // update radar
+  if(radarChart) {
+    var vals = [0,0,0,0];
+    // fill in axes up to current turn with plausible values
+    var baseVals = [7,8,6,9];
+    for(var i=0;i<turnNumber;i++) {
+      vals[i] = baseVals[i];
+    }
+    radarChart.data.datasets[0].data = vals;
+    radarChart.update();
+  }
+}
+
+// ── START CONVERSATION ──
+function startConversation() {
+  messages = [{ role:"system", content: SYSTEM_PROMPTS[config.ds] }];
+  // Add a silent trigger so the Anthropic API receives a non-empty messages array.
+  // Without this, filtering out the system message leaves messages:[] which causes a 400 error.
+  messages.push({ role:"user", content:"Hello, please begin." });
+  setInputEnabled(false);
+  callOpenAI();
+}
+
+// ── OPENAI API CALL ──
+function callOpenAI() {
+  isWaiting = true;
+  setInputEnabled(false);
+  showTyping();
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": OPENAI_API_KEY,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 300,
+      system: SYSTEM_PROMPTS[config.ds],
+      messages: messages.filter(function(m){return m.role !== "system";})
+    })
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    removeTyping();
+    var aiText = "";
+    if(data.content && data.content[0] && data.content[0].text) {
+      aiText = data.content[0].text.trim();
+    } else if(data.error) {
+      aiText = "I am having trouble connecting right now. Please try refreshing the page.";
+    }
+    messages.push({role:"assistant", content:aiText});
+    addAIMessage(aiText);
+    isWaiting = false;
+
+    // check if conversation is complete
+    if(userTurns >= 4) {
+      setInputEnabled(false);
+      document.getElementById("input-hint").textContent = "Conversation complete — click below to continue.";
+      showCompleteButton();
+    } else {
+      setInputEnabled(true);
+      document.getElementById("turn-display").textContent = userTurns+1;
+    }
+  })
+  .catch(function(err){
+    removeTyping();
+    isWaiting = false;
+    if(userTurns >= 4) {
+      // Even on error, if all 4 turns are done, let participant proceed
+      setInputEnabled(false);
+      document.getElementById("input-hint").textContent = "Conversation complete — click below to continue.";
+      showCompleteButton();
+    } else {
+      addAIMessage("I am having trouble connecting. Please refresh the page and try again.");
+      setInputEnabled(true);
+    }
+  });
+}
+
+// ── SEND USER MESSAGE ──
+function sendMessage() {
+  var input = document.getElementById("user-input");
+  var text  = input.value.trim();
+  if(!text || isWaiting) return;
+
+  input.value = "";
+  autoResize(input);
+  setInputEnabled(false);
+
+  userTurns++;
+  userAnswers[userTurns-1] = text;
+
+  messages.push({role:"user", content:text});
+  addUserMessage(text);
+
+  // update sidebar after user responds
+  updateSidebar(userTurns, text);
+
+  callOpenAI();
+}
+
+// ── DOM HELPERS ──
+function addAIMessage(text) {
+  var area = document.getElementById("messages");
+  var row  = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML =
+    '<div class="avatar ai">AI</div>' +
+    '<div class="bubble ai">' +
+      '<div class="name">ChatAI</div>' +
+      '<div class="text">'+esc(text)+'</div>' +
+    '</div>';
+  area.appendChild(row);
+  scrollDown();
+}
+
+function addUserMessage(text) {
+  var area = document.getElementById("messages");
+  var row  = document.createElement("div");
+  row.className = "msg-row user";
+  row.innerHTML =
+    '<div class="bubble user-bubble">' +
+      '<div class="text">'+esc(text)+'</div>' +
+    '</div>' +
+    '<div class="avatar user">U</div>';
+  area.appendChild(row);
+  scrollDown();
+}
+
+function showTyping() {
+  var area = document.getElementById("messages");
+  var row  = document.createElement("div");
+  row.className = "msg-row";
+  row.id = "typing-indicator";
+  row.innerHTML =
+    '<div class="avatar ai">AI</div>' +
+    '<div class="bubble ai"><div class="typing"><span></span><span></span><span></span></div></div>';
+  area.appendChild(row);
+  scrollDown();
+}
+
+function removeTyping() {
+  var el = document.getElementById("typing-indicator");
+  if(el) el.remove();
+}
+
+function showCompleteButton() {
+  var area = document.getElementById("messages");
+  var div  = document.createElement("div");
+  div.style.cssText = "max-width:740px;margin:16px auto;padding:0 18px;";
+  div.innerHTML =
+    '<button onclick="endConversation()" style="width:100%;padding:12px 20px;background:#10a37f;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;">' +
+    'Continue to Survey →</button>';
+  area.appendChild(div);
+  scrollDown();
+}
+
+function scrollDown() {
+  var area = document.getElementById("messages");
+  area.scrollTop = area.scrollHeight;
+}
+
+function setInputEnabled(enabled) {
+  var inp = document.getElementById("user-input");
+  var btn = document.getElementById("send-btn");
+  inp.disabled = !enabled;
+  btn.disabled = !enabled;
+}
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120)+"px";
+  // enable send button only if there is text
+  document.getElementById("send-btn").disabled = el.value.trim() === "" || isWaiting;
+}
+
+function handleKey(e) {
+  if(e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function esc(str) {
+  var d = document.createElement("div");
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
+}
+
+// ── END + REDIRECT ──
+function endConversation() {
+  showScreen("screen-complete");
+  startCountdown();
+}
+
+function startCountdown() {
+  var n  = 5;
+  var el = document.getElementById("countdown");
+  var t  = setInterval(function(){
+    n--;
+    el.textContent = n;
+    if(n<=0){ clearInterval(t); goToQualtrics(); }
+  },1000);
+}
+
+function goToQualtrics() {
+  var url = new URL(QUALTRICS_URL);
+  url.searchParams.set("condition", condition);
+  url.searchParams.set("pr", config.pr);
+  url.searchParams.set("ds", config.ds);
+  url.searchParams.set("pc", config.pc);
+  window.location.href = url.toString();
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
