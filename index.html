@@ -1211,10 +1211,10 @@ function startCountdown() {
 
 function goToQualtrics() {
   var url = new URL(QUALTRICS_URL);
-  url.searchParams.set("condition", condition);
-  url.searchParams.set("pr", config.pr);
-  url.searchParams.set("ds", config.ds);
-  url.searchParams.set("pc", config.pc);
+  url.searchParams.set("condition_id", condition);
+  url.searchParams.set("Profiling", config.pr);
+  url.searchParams.set("Sensitivity", config.ds);
+  url.searchParams.set("Confidentiality", config.pc);
   window.location.href = url.toString();
 }
 
