@@ -14,9 +14,20 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    res.status(200).json(data);
+
+    // 🔴 VERY IMPORTANT: always return something
+    if (!response.ok) {
+      return res.status(500).json({
+        error: data.error?.message || "OpenAI error",
+        raw: data
+      });
+    }
+
+    return res.status(200).json(data);
 
   } catch (error) {
-    res.status(500).json({ error: "API error" });
+    return res.status(500).json({
+      error: error.message
+    });
   }
 }
