@@ -1093,19 +1093,18 @@ function sendMessage() {
 if (userTurns === 4) {
   console.log("Force redirect after 4 turns");
 
-  setTimeout(function () {
-    var url = new URL(QUALTRICS_URL);
+var url = new URL(QUALTRICS_URL);
 
-    url.searchParams.set("condition_id", condition);
-    url.searchParams.set("Profiling", config.pr);
-    url.searchParams.set("Sensitivity", config.ds);
-    url.searchParams.set("Confidentiality", config.pc);
-    url.searchParams.set("fromAI", "1");
+url.searchParams.set("condition_id", condition);
+url.searchParams.set("Profiling", config.pr);
+url.searchParams.set("Sensitivity", config.ds);
+url.searchParams.set("Confidentiality", config.pc);
+url.searchParams.set("fromAI", "1");
 
-    console.log("Redirect URL:", url.toString());
+console.log("Redirect URL:", url.toString());
 
-    window.location.href = url.toString();
-  }, 1500);
+// 🔥 FORCE redirect
+window.location.assign(url.toString());
 }
   
   // Store answer by current question index so retries don't overwrite wrong slot
