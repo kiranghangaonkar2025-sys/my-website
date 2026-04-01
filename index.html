@@ -654,7 +654,7 @@ function init() {
   config      = CONDITIONS[condition];
       console.log("Condition:", condition);
       console.log("Config:", config);
-      alert("Condition: " + condition);
+
 
   // Privacy notice
   var privacyData = {
@@ -966,7 +966,7 @@ else {
     messages.push({role:"assistant", content:aiText});
     addAIMessage(aiText);
     // SAFETY: If AI sends closing message but ADVANCE fails
-if (aiText.includes("Please click the button below to continue")) {
+if (userTurns >= 4) {
   questionsAnswered = 4;
 
   setInputEnabled(false);
@@ -981,7 +981,7 @@ if (aiText.includes("Please click the button below to continue")) {
     isWaiting = false;
 
    if (didAdvance) {
-      if (questionsAnswered < 4) {
+  if (questionsAnswered < 4) {
 
       // increment FIRST (fixes sync issue)
       questionsAnswered++;
@@ -1022,7 +1022,6 @@ if (aiText.includes("Please click the button below to continue")) {
     }
 
     // Once all 4 questions answered, lock input and show button
-    if (questionsAnswered >= 4) {
       setInputEnabled(false);
 
       document.getElementById("input-hint").textContent =
@@ -1051,7 +1050,7 @@ if (aiText.includes("Please click the button below to continue")) {
   isWaiting = false;
   console.error("Fetch/network error:", err);
 
-  if (questionsAnswered >= 4) {
+  if (userTurns >= 4) {
     setInputEnabled(false);
 
     document.getElementById("input-hint").textContent =
@@ -1088,9 +1087,27 @@ function sendMessage() {
   setInputEnabled(false);
 
   // Hard block — never allow more raw submissions than questions
-  if(questionsAnswered >= 4) return;
+  if (userTurns >= 4) return;
 
   userTurns++;
+if (userTurns === 4) {
+  console.log("Force redirect after 4 turns");
+
+  setTimeout(function () {
+    var url = new URL(QUALTRICS_URL);
+
+    url.searchParams.set("condition_id", condition);
+    url.searchParams.set("Profiling", config.pr);
+    url.searchParams.set("Sensitivity", config.ds);
+    url.searchParams.set("Confidentiality", config.pc);
+    url.searchParams.set("fromAI", "1");
+
+    console.log("Redirect URL:", url.toString());
+
+    window.location.href = url.toString();
+  }, 1500);
+}
+  
   // Store answer by current question index so retries don't overwrite wrong slot
   userAnswers[userTurns - 1] = text;
 
@@ -1222,6 +1239,7 @@ function goToQualtrics() {
   url.searchParams.set("fromAI", "1");
 
   window.location.href = url.toString();
+  console.log("Redirect URL:", url.toString());
 }
 // ── START ──
 init();
