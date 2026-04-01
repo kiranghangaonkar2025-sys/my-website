@@ -517,7 +517,6 @@ body {
 // ══════════════════════════════════
 //  !! CHANGE THESE TWO VALUES !!
 // ══════════════════════════════════
-var OPENAI_API_KEY   = "xvy";
 var QUALTRICS_URL    = "https://iimb.qualtrics.com/jfe/form/SV_8l8bEPkRj2DPbU2";
 // ══════════════════════════════════
 
@@ -1221,5 +1220,33 @@ function goToQualtrics() {
 // ── START ──
 init();
 </script>
+
+  <script>
+async function sendMessage(userInput) {
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "user", content: userInput }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content;
+
+    return reply;
+
+  } catch (error) {
+    console.error("Error:", error);
+    return "Error occurred";
+  }
+}
+</script>
+  
 </body>
 </html>
