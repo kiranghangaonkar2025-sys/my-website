@@ -931,29 +931,33 @@ function callOpenAI() {
   var oaiMessages = [{role:"system", content: SYSTEM_PROMPTS[config.ds]}];
   messages.filter(function(m){return m.role !== "system";}).forEach(function(m){ oaiMessages.push(m); });
 
-  fetch("https://api.openai.com/v1/chat/completions", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "Authorization": "Bearer " + OPENAI_API_KEY
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      max_tokens: 300,
-      messages: oaiMessages
-    })
+  fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    messages: oaiMessages
   })
+})
+    
   .then(function(res){ return res.json(); })
   .then(function(data){
     removeTyping();
-    var aiText = "";
-    if(data.choices && data.choices[0] && data.choices[0].message) {
-      aiText = data.choices[0].message.content.trim();
-    } else {
-      aiText = "I am having trouble connecting right now. Please refresh the page.";
-      console.error("API error:", data.error || data);
-    }
+var aiText = "";
 
+if (data.error) {
+  console.error("Backend error:", data.error);
+  aiText = "⚠️ Error: " + data.error;
+}
+else if (data.choices && data.choices[0]?.message?.content) {
+  aiText = data.choices[0].message.content.trim();
+}
+else {
+  console.error("Unexpected response:", data);
+  aiText = "⚠️ No valid response received.";
+}
+    
     // Check for [ADVANCE] token — AI includes this only when it accepted the answer
     var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
     // Strip the token before showing to participant
@@ -1221,32 +1225,6 @@ function goToQualtrics() {
 init();
 </script>
 
-  <script>
-async function sendMessage(userInput) {
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: "user", content: userInput }
-        ]
-      })
-    });
-
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content;
-
-    return reply;
-
-  } catch (error) {
-    console.error("Error:", error);
-    return "Error occurred";
-  }
-}
-</script>
   
 </body>
 </html>
