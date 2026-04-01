@@ -1214,13 +1214,15 @@ function startCountdown() {
 
 function goToQualtrics() {
   var url = new URL(QUALTRICS_URL);
+
   url.searchParams.set("condition_id", condition);
   url.searchParams.set("Profiling", config.pr);
   url.searchParams.set("Sensitivity", config.ds);
   url.searchParams.set("Confidentiality", config.pc);
+  url.searchParams.set("returning", "1");
+
   window.location.href = url.toString();
 }
-
 // ── START ──
 init();
 </script>
