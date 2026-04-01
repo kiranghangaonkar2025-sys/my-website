@@ -1219,7 +1219,7 @@ function goToQualtrics() {
   url.searchParams.set("Profiling", config.pr);
   url.searchParams.set("Sensitivity", config.ds);
   url.searchParams.set("Confidentiality", config.pc);
-  url.searchParams.set("returning", "1");
+  url.searchParams.set("fromAI", "1");
 
   window.location.href = url.toString();
 }
