@@ -1,42 +1,27 @@
-export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
+import OpenAI from "openai";
 
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).end();
+
+  try {
     const { messages } = req.body;
 
-    if (!messages) {
-      return res.status(400).json({ error: "Missing messages" });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "messages array required" });
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: messages,
-        max_tokens: 300
-      })
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: messages,   // messages[0] is already the system prompt
+      max_tokens: 400,
+      temperature: 0.7,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(500).json({
-        error: data.error?.message || "OpenAI error",
-        raw: data
-      });
-    }
-
-    return res.status(200).json(data);
-
-  } catch (error) {
-    return res.status(500).json({
-      error: error.message
-    });
+    res.status(200).json(completion);
+  } catch (err) {
+    console.error("OpenAI error:", err);
+    res.status(500).json({ error: err.message });
   }
 }
