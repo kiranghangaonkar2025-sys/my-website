@@ -943,108 +943,84 @@ function callOpenAI() {
     
   .then(function(res){ return res.json(); })
   .then(function(data){
-    removeTyping();
-var aiText = "";
+  removeTyping();
 
-if (data.error) {
-  console.error("Backend error:", data.error);
-  aiText = "⚠️ Error: " + data.error;
-}
-else if (data.choices && data.choices[0]?.message?.content) {
-  aiText = data.choices[0].message.content.trim();
-}
-else {
-  console.error("Unexpected response:", data);
-  aiText = "⚠️ No valid response received.";
-}
-    
-    // Check for [ADVANCE] token — AI includes this only when it accepted the answer
-    var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
-    // Strip the token before showing to participant
-    aiText = aiText.replace("[ADVANCE]", "").trim();
+  var aiText = "";
 
-    messages.push({role:"assistant", content:aiText});
-    addAIMessage(aiText);
-    // SAFETY: If AI sends closing message but ADVANCE fails
-if (userTurns >= 4) {
-  questionsAnswered = 4;
+  if (data.error) {
+    console.error("Backend error:", data.error);
+    aiText = "⚠️ Error: " + data.error;
+  }
+  else if (data.choices && data.choices[0] && data.choices[0].message) {
+    aiText = data.choices[0].message.content.trim();
+  }
+  else {
+    console.error("Unexpected response:", data);
+    aiText = "⚠️ No valid response received.";
+  }
 
-  setInputEnabled(false);
+  var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
+  aiText = aiText.replace("[ADVANCE]", "").trim();
 
-  document.getElementById("input-hint").textContent =
-    "Conversation complete — click below to continue.";
+  messages.push({role:"assistant", content:aiText});
+  addAIMessage(aiText);
 
-  setTimeout(function () {
-    showCompleteButton();
-  }, 300);
-}
-    isWaiting = false;
+  isWaiting = false;
 
-   if (didAdvance) {
-  if (questionsAnswered < 4) {
-
-      // increment FIRST (fixes sync issue)
+  // ✅ HANDLE ADVANCE LOGIC
+  if (didAdvance) {
+    if (questionsAnswered < 4) {
       questionsAnswered++;
-
-      // now update sidebar using correct index
-      
-
       attemptsOnCurrent = 0;
-      }
-    } else {
-      // AI did not accept the answer — increment attempt counter
-      attemptsOnCurrent++;
-      if(attemptsOnCurrent >= MAX_ATTEMPTS) {
-        // Force-advance: update sidebar with whatever the last answer was
-        updateSidebar(questionsAnswered + 1, userAnswers[questionsAnswered] || "—");
-        questionsAnswered++;
-        attemptsOnCurrent = 0;
-        if(questionsAnswered < 4) {
-          messages.push({
-            role: "user",
-            content: "[SYSTEM: participant has used all attempts on this question. Acknowledge briefly and move to the next question. Include [ADVANCE] in your reply.]"
-          });
-          isWaiting = true;
-          setInputEnabled(false);
-          callOpenAI();
-          return;
-        } else {
-          messages.push({
-            role: "user",
-            content: "[SYSTEM: all questions complete. Send the closing message now and include [ADVANCE].]"
-          });
-          isWaiting = true;
-          setInputEnabled(false);
-          callOpenAI();
-          return;
-        }
+    }
+  } else {
+    attemptsOnCurrent++;
+
+    if (attemptsOnCurrent >= MAX_ATTEMPTS) {
+      updateSidebar(questionsAnswered + 1, userAnswers[questionsAnswered] || "—");
+      questionsAnswered++;
+      attemptsOnCurrent = 0;
+
+      if (questionsAnswered < 4) {
+        messages.push({
+          role: "user",
+          content: "[SYSTEM: participant has used all attempts on this question. Move to next. Include [ADVANCE]]"
+        });
+        callOpenAI();
+        return;
+      } else {
+        messages.push({
+          role: "user",
+          content: "[SYSTEM: all questions complete. Send closing message with [ADVANCE]]"
+        });
+        callOpenAI();
+        return;
       }
     }
+  }
 
-    // Once all 4 questions answered, lock input and show button
-      setInputEnabled(false);
+  // ✅ COMPLETION
+  if (questionsAnswered >= 4) {
+    setInputEnabled(false);
 
-      document.getElementById("input-hint").textContent =
+    document.getElementById("input-hint").textContent =
       "Conversation complete — click below to continue.";
 
-      // Prevent duplicate button rendering issues
+    setTimeout(function () {
+      showCompleteButton();
+    }, 300);
+
+    if (config.pr === "low") {
       setTimeout(function () {
-        showCompleteButton();
-      }, 300);
-    
-      setTimeout(function () {
-        if (config.pr === "low") {
-          var msg = document.getElementById("data-cleared");
+        var msg = document.getElementById("data-cleared");
         if (msg) msg.style.display = "block";
-        }
       }, 800);
-    } 
-    
-    else {
-      setInputEnabled(true);
-      document.getElementById("turn-display").textContent = questionsAnswered + 1;
     }
-  })
+  } else {
+    setInputEnabled(true);
+    document.getElementById("turn-display").textContent = questionsAnswered + 1;
+  }
+})
   .catch(function(err){
   removeTyping();
   isWaiting = false;
