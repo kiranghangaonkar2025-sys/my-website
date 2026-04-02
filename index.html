@@ -380,6 +380,10 @@ body {
     </div>
     <h2>Before You Begin</h2>
     <p class="sub">Please read the following instructions carefully.</p>
+    <div id="privacy-box" class="card-body" style="border-left:3px solid #ef4444;">
+  <strong id="privacy-title"></strong>
+  <div id="privacy-body" style="margin-top:6px;"></div>
+</div>
     <div class="card-body">
       You will have a short conversation with an AI assistant. The AI will ask you a few questions. Please answer naturally and honestly. After the conversation you will be asked to complete a brief survey about your experience.
     </div>
@@ -667,8 +671,13 @@ function init() {
       body:  "Your conversation is fully private and encrypted. No data is stored or shared with anyone. All conversation data is permanently deleted when this session ends."
     }
   };
-  document.getElementById("privacy-title").textContent = privacyData[config.pc].title;
-  document.getElementById("privacy-body").textContent  = privacyData[config.pc].body;
+ var titleEl = document.getElementById("privacy-title");
+var bodyEl  = document.getElementById("privacy-body");
+
+if (titleEl && bodyEl && privacyData[config.pc]) {
+  titleEl.textContent = privacyData[config.pc].title;
+  bodyEl.textContent  = privacyData[config.pc].body;
+}
 
 }
 
