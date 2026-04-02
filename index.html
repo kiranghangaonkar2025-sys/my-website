@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -24,7 +24,7 @@
 }
 
 body {
-  font-family: 'DM Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100vh;
@@ -37,7 +37,7 @@ body {
 .screen { display:none; height:100vh; flex-direction:column; }
 .screen.active { display:flex; }
 
-/* ── CARD SCREENS ── */
+/* ── CARD SCREENS (privacy + task) ── */
 .card-screen {
   align-items:center;
   justify-content:center;
@@ -275,13 +275,21 @@ body {
 }
 
 .sid-pulse {
-  width:6px;height:6px;border-radius:50%;
-  background:#ef4444;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#ef4444; /* default */
   animation:pulse 1.4s infinite;
   flex-shrink:0;
 }
-.sid-pulse.green { background:#10a37f !important; }
-.sid-pulse.red   { background:#ef4444 !important; }
+
+.sid-pulse.green {
+  background: #10a37f !important;
+}
+
+.sid-pulse.red {
+  background: #ef4444 !important;
+}
 @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:.2;} }
 
 .sid-body { flex:1;overflow-y:auto;padding:12px 14px; }
@@ -304,14 +312,21 @@ body {
 }
 .attr-item.show { opacity:1;transform:translateY(0); }
 .attr-item .icon {
-  font-size:16px;flex-shrink:0;width:20px;
-  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+  width:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .attr-item .attr-content { flex:1; }
 .attr-item .attr-label { color:var(--text3);font-size:11px; }
 .attr-item .attr-val { color:var(--text);font-weight:500;font-size:12px; }
 
-.sid-divider { border:none;border-top:1px solid var(--border);margin:10px 0; }
+.sid-divider {
+  border:none;border-top:1px solid var(--border);
+  margin:10px 0;
+}
 
 .radar-label {
   font-size:10px;color:var(--text3);
@@ -350,8 +365,10 @@ body {
 </head>
 <body>
 
+
+
 <!-- ══════════════════════════════
-     SCREEN 1: TASK INSTRUCTIONS
+     SCREEN 2: TASK INSTRUCTIONS
 ══════════════════════════════ -->
 <div id="screen-task" class="screen card-screen active">
   <div class="card">
@@ -363,13 +380,10 @@ body {
     </div>
     <h2>Before You Begin</h2>
     <p class="sub">Please read the following instructions carefully.</p>
-
-    <!-- FIX: border colour now set by JS via setupPrivacyBox() -->
-    <div id="privacy-box" class="card-body">
-      <strong id="privacy-title"></strong>
-      <div id="privacy-body" style="margin-top:6px;"></div>
-    </div>
-
+    <div id="privacy-box" class="card-body" style="border-left:3px solid #ef4444;">
+  <strong id="privacy-title"></strong>
+  <div id="privacy-body" style="margin-top:6px;"></div>
+</div>
     <div class="card-body">
       You will have a short conversation with an AI assistant. The AI will ask you a few questions. Please answer naturally and honestly. After the conversation you will be asked to complete a brief survey about your experience.
     </div>
@@ -387,10 +401,11 @@ body {
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 2: CHAT
+     SCREEN 3: CHAT
 ══════════════════════════════ -->
 <div id="screen-chat" class="screen">
 
+  <!-- Top bar: confidentiality manipulation -->
   <div class="top-bar" id="top-bar">
     <svg id="top-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
       <path id="top-icon-path" d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v3m0 2v.5"/>
@@ -398,6 +413,7 @@ body {
     <span id="top-bar-text"></span>
   </div>
 
+  <!-- Chat header -->
   <div class="chat-header">
     <div class="chat-header-left">
       <div class="chat-header-icon">
@@ -405,29 +421,29 @@ body {
       </div>
       ChatAI Assistant
     </div>
-    <div class="model-pill" id="model-pill">AI Assistant</div>
+    <div class="model-pill">GPT-4o</div>
   </div>
 
+  <!-- Main area: chat + sidebar -->
   <div class="chat-main">
+
+    <!-- Messages -->
     <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
       <div class="messages" id="messages"></div>
       <div class="input-area">
         <div class="input-wrap">
-          <textarea id="user-input" rows="1" placeholder="Type your message..."
-            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <textarea id="user-input" rows="1" placeholder="Type your message..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
             <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
           </button>
         </div>
-        <div class="input-hint" id="input-hint">
-          Exchange <span id="turn-display">1</span> of 4
-        </div>
+        <div class="input-hint" id="input-hint">Exchange <span id="turn-display">1</span> of 4</div>
       </div>
     </div>
 
-    <!-- Profiling Sidebar -->
+    <!-- Profiling Sidebar (High PR only) -->
     <div class="sidebar hidden" id="sidebar">
-      <div class="sid-header" id="sid-header">
+      <div class="sid-header">
         <div class="sid-pulse"></div>
         Profile building...
       </div>
@@ -438,50 +454,54 @@ body {
           <span class="icon" id="attr-1-icon"></span>
           <div class="attr-content">
             <div class="attr-label" id="attr-1-label"></div>
-            <div class="attr-val"   id="attr-1-val">—</div>
+            <div class="attr-val" id="attr-1-val">—</div>
           </div>
         </div>
         <div class="attr-item" id="attr-2">
           <span class="icon" id="attr-2-icon"></span>
           <div class="attr-content">
             <div class="attr-label" id="attr-2-label"></div>
-            <div class="attr-val"   id="attr-2-val">—</div>
+            <div class="attr-val" id="attr-2-val">—</div>
           </div>
         </div>
         <div class="attr-item" id="attr-3">
           <span class="icon" id="attr-3-icon"></span>
           <div class="attr-content">
             <div class="attr-label" id="attr-3-label"></div>
-            <div class="attr-val"   id="attr-3-val">—</div>
+            <div class="attr-val" id="attr-3-val">—</div>
           </div>
         </div>
         <div class="attr-item" id="attr-4">
           <span class="icon" id="attr-4-icon"></span>
           <div class="attr-content">
             <div class="attr-label" id="attr-4-label"></div>
-            <div class="attr-val"   id="attr-4-val">—</div>
+            <div class="attr-val" id="attr-4-val">—</div>
           </div>
         </div>
 
         <hr class="sid-divider">
-        <div class="radar-label" id="radar-label">Inferred profile</div>
-        <canvas id="radar-chart" width="168" height="150"
-          style="display:block;margin:0 auto;"></canvas>
+        <div class="radar-label">Inferred profile</div>
+        <canvas id="radar-chart" width="168" height="150" style="display:block;margin:0 auto;"></canvas>
 
         <div id="data-cleared" style="
-          display:none;margin-top:12px;padding:10px;
-          border:1px solid var(--border);border-radius:8px;
-          font-size:12px;color:#6ee7b7;
-          background:rgba(16,163,127,0.08);text-align:center;">
-          ✅ Your responses have been cleared from the system
-        </div>
+        display:none;
+        margin-top:12px;
+        padding:10px;
+        border:1px solid var(--border);
+        border-radius:8px;
+        font-size:12px;
+        color:#6ee7b7;
+        background:rgba(16,163,127,0.08);
+        text-align:center;">
+        ✅ Your responses have been cleared from the system
       </div>
     </div>
+
   </div>
 </div>
 
 <!-- ══════════════════════════════
-     SCREEN 3: COMPLETE
+     SCREEN 4: COMPLETE
 ══════════════════════════════ -->
 <div id="screen-complete" class="screen card-screen">
   <div class="complete-card">
@@ -499,20 +519,21 @@ body {
 <script>
 
 // ══════════════════════════════════
-//  CONFIGURATION — edit these
+//  !! CHANGE THESE TWO VALUES !!
 // ══════════════════════════════════
-var QUALTRICS_URL = "https://iimb.qualtrics.com/jfe/form/SV_8l8bEPkRj2DPbU2";
+var QUALTRICS_URL    = "https://iimb.qualtrics.com/jfe/form/SV_8l8bEPkRj2DPbU2";
+// ══════════════════════════════════
 
 // ── CONDITION MAP ──
 var CONDITIONS = {
-  1:{pr:"low",  ds:"low",  pc:"low"},
-  2:{pr:"low",  ds:"low",  pc:"high"},
-  3:{pr:"low",  ds:"high", pc:"low"},
-  4:{pr:"low",  ds:"high", pc:"high"},
-  5:{pr:"high", ds:"low",  pc:"low"},
-  6:{pr:"high", ds:"low",  pc:"high"},
-  7:{pr:"high", ds:"high", pc:"low"},
-  8:{pr:"high", ds:"high", pc:"high"}
+  1:{pr:"low", ds:"low", pc:"low"},
+  2:{pr:"low", ds:"low", pc:"high"},
+  3:{pr:"low", ds:"high",pc:"low"},
+  4:{pr:"low", ds:"high",pc:"high"},
+  5:{pr:"high",ds:"low", pc:"low"},
+  6:{pr:"high",ds:"low", pc:"high"},
+  7:{pr:"high",ds:"high",pc:"low"},
+  8:{pr:"high",ds:"high",pc:"high"}
 };
 
 // ── SYSTEM PROMPTS ──
@@ -599,16 +620,16 @@ IMPORTANT:
 // ── PROFILE SIDEBAR DATA ──
 var PROFILE_ATTRS = {
   low: [
-    {icon:"🐾", label:"Favourite animal",     radarLabel:"Animal"},
-    {icon:"🕐", label:"Favourite time of day", radarLabel:"Time pref"},
-    {icon:"🌤", label:"Favourite season",       radarLabel:"Season"},
-    {icon:"🎨", label:"Favourite colour",       radarLabel:"Colour"}
+    {icon:"🐾", label:"Favourite animal",      radarLabel:"Animal"},
+    {icon:"🕐", label:"Favourite time of day",  radarLabel:"Time pref"},
+    {icon:"🌤", label:"Favourite season",        radarLabel:"Season"},
+    {icon:"🎨", label:"Favourite colour",        radarLabel:"Colour"}
   ],
   high: [
-    {icon:"📍", label:"Location",              radarLabel:"Location"},
-    {icon:"💰", label:"Monthly income",         radarLabel:"Income"},
-    {icon:"📊", label:"Debt status",            radarLabel:"Debt"},
-    {icon:"💊", label:"Medication",             radarLabel:"Health"}
+    {icon:"📍", label:"Location",               radarLabel:"Location"},
+    {icon:"💰", label:"Monthly income",          radarLabel:"Income"},
+    {icon:"📊", label:"Debt status",             radarLabel:"Debt"},
+    {icon:"💊", label:"Medication",              radarLabel:"Health"}
   ]
 };
 
@@ -618,68 +639,68 @@ var RADAR_COLORS = {
 };
 
 // ── STATE ──
-var condition         = 1;
-var config            = {};
-var messages          = [];    // full conversation history (system + turns)
-var userTurns         = 0;     // raw submission count (never reset)
-var questionsAnswered = 0;     // advances only when AI includes [ADVANCE]
-var attemptsOnCurrent = 0;     // failed attempts on the current question
-var MAX_ATTEMPTS      = 3;
-var isWaiting         = false;
-var radarChart        = null;
-var userAnswers       = ["","","",""];  // indexed by questionsAnswered at submit time
+var condition        = 1;
+var config           = {};
+var messages         = [];   // OpenAI message history
+var userTurns        = 0;    // raw number of user submissions
+var questionsAnswered = 0;   // number of questions genuinely completed (advances only on [ADVANCE])
+var attemptsOnCurrent = 0;   // retry attempts on the current question (resets each time question advances)
+var MAX_ATTEMPTS      = 3;   // after this many failed attempts, force-advance to next question
+var isWaiting        = false;
+var radarChart       = null;
+var userAnswers      = ["","","",""];
 
 // ── INIT ──
 function init() {
   var params  = new URLSearchParams(window.location.search);
   var condNum = parseInt(params.get("condition")) || 1;
-  condition   = Math.min(Math.max(condNum, 1), 8);
+  condition   = Math.min(Math.max(condNum,1),8);
   config      = CONDITIONS[condition];
-  console.log("Condition:", condition, "Config:", config);
-  setupPrivacyBox();
+      console.log("Condition:", condition);
+      console.log("Config:", config);
+
+
+  // Privacy notice
+  var privacyData = {
+    low: {
+      title: "Data Notice",
+      body:  "Your conversation may be used to improve our services and shared with our partner network. Data handling practices are subject to our standard terms of service."
+    },
+    high: {
+      title: "Privacy Guarantee",
+      body:  "Your conversation is fully private and encrypted. No data is stored or shared with anyone. All conversation data is permanently deleted when this session ends."
+    }
+  };
+ var titleEl = document.getElementById("privacy-title");
+var bodyEl  = document.getElementById("privacy-body");
+
+if (titleEl && bodyEl && privacyData[config.pc]) {
+  titleEl.textContent = privacyData[config.pc].title;
+  bodyEl.textContent  = privacyData[config.pc].body;
 }
 
-// ── PRIVACY BOX (on task screen) ──
-var PRIVACY_DATA = {
-  low: {
-    title: "Data Notice",
-    body:  "Your conversation may be used to improve our services and shared with our partner network. Data handling practices are subject to our standard terms of service.",
-    color: "#ef4444"
-  },
-  high: {
-    title: "Privacy Guarantee",
-    body:  "Your conversation is fully private and encrypted. No data is stored or shared with anyone. All conversation data is permanently deleted when this session ends.",
-    color: "var(--accent)"
-  }
-};
-
-function setupPrivacyBox() {
-  var pd = PRIVACY_DATA[config.pc];
-  document.getElementById("privacy-title").textContent = pd.title;
-  document.getElementById("privacy-body").textContent  = pd.body;
-  document.getElementById("privacy-box").style.borderLeftColor = pd.color;
 }
 
-// ── SCREEN NAVIGATION ──
+// ── NAVIGATION ──
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(function(s){
-    s.classList.remove("active");
-  });
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
   document.getElementById(id).classList.add("active");
 }
 
+function goToTask() { showScreen("screen-task"); }
+
 function goToChat() {
-  // Reset "data cleared" notice in case of replay
-  var cleared = document.getElementById("data-cleared");
-  if (cleared) cleared.style.display = "none";
-
+  var msg = document.getElementById("data-cleared");
+  if (msg) msg.style.display = "none";
   showScreen("screen-chat");
-
-  // FIX: set pill label after config is confirmed
-  document.getElementById("model-pill").textContent =
-    config.pr === "high" ? "Advanced AI System" : "AI Assistant";
-
   setupTopBar();
+  var pill = document.querySelector(".model-pill");
+
+if (config.pr === "low") {
+  pill.textContent = "AI Assistant";
+} else {
+  pill.textContent = "Advanced AI System";
+}
   setupSidebar();
   initRadarChart();
   startConversation();
@@ -691,84 +712,96 @@ function setupTopBar() {
   var txt = document.getElementById("top-bar-text");
   var ico = document.getElementById("top-icon-path");
 
-  if (config.pc === "low") {
+  if(config.pc === "low") {
     tb.className = "top-bar pc-low";
     txt.textContent = "Your conversation may be used to improve our services and shared with our partner network.";
-    ico.setAttribute("d", "M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v3m0 2v.5");
+    ico.setAttribute("d","M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v3m0 2v.5");
   } else {
     tb.className = "top-bar pc-high";
     txt.textContent = "Your conversation is fully private and encrypted. No data is stored or shared with anyone.";
-    ico.setAttribute("d", "M8 2a2.5 2.5 0 00-2.5 2.5V6H4.5A1.5 1.5 0 003 7.5v5A1.5 1.5 0 004.5 14h7a1.5 1.5 0 001.5-1.5v-5A1.5 1.5 0 0011.5 6h-1V4.5A2.5 2.5 0 008 2zm0 1.5A1 1 0 019 4.5V6H7V4.5A1 1 0 018 3.5z");
+    ico.setAttribute("d","M8 2a2.5 2.5 0 00-2.5 2.5V6H4.5A1.5 1.5 0 003 7.5v5A1.5 1.5 0 004.5 14h7a1.5 1.5 0 001.5-1.5v-5A1.5 1.5 0 0011.5 6h-1V4.5A2.5 2.5 0 008 2zm0 1.5A1 1 0 019 4.5V6H7V4.5A1 1 0 018 3.5z");
   }
 }
 
 // ── SIDEBAR ──
-function setupSidebar() {
-  var sb     = document.getElementById("sidebar");
-  var header = document.getElementById("sid-header");
+  function setupSidebar() {
+  var sb = document.getElementById("sidebar");
+  var header = document.querySelector(".sid-header");
 
+  // ── SHOW SIDEBAR ──
   sb.classList.remove("hidden");
 
+  // ── SET HEADER FIRST (IMPORTANT: creates pulse element) ──
   if (config.pr === "high") {
-    header.innerHTML = '<div class="sid-pulse red"></div> Profile building...';
+    header.innerHTML = '<div class="sid-pulse"></div> Profile building...';
   } else {
-    header.innerHTML = '<div class="sid-pulse green"></div> Interaction log';
+    header.innerHTML = '<div class="sid-pulse"></div> Interaction log';
   }
 
-  // Avatar
+  // ── NOW SELECT THE NEW PULSE ELEMENT ──
+  var pulse = document.querySelector(".sid-pulse");
+
+  pulse.classList.remove("green", "red");
+
+  if (config.pr === "low") {
+    pulse.classList.add("green");
+  } else {
+    pulse.classList.add("red");
+  }
+
+  // ── AVATAR COLOR ──
   var avatar = document.getElementById("profile-avatar");
+
   if (config.pr === "low") {
     avatar.style.background = "#0f2a1f";
-    avatar.style.border     = "2px solid #10a37f";
-    avatar.style.color      = "#6ee7b7";
+    avatar.style.border = "2px solid #10a37f";
+    avatar.style.color = "#6ee7b7";
   } else {
     avatar.style.background = "#3a1a1a";
-    avatar.style.border     = "2px solid #ef4444";
-    avatar.style.color      = "#fca5a5";
+    avatar.style.border = "2px solid #ef4444";
+    avatar.style.color = "#fca5a5";
   }
 
-  // Attribute labels driven by ds (data sensitivity)
+  // ── ATTRIBUTES SETUP ──
   var attrs = PROFILE_ATTRS[config.ds];
+
   for (var i = 1; i <= 4; i++) {
-    document.getElementById("attr-" + i + "-icon").textContent  = attrs[i-1].icon;
-    document.getElementById("attr-" + i + "-label").textContent = attrs[i-1].label;
-    document.getElementById("attr-" + i + "-val").textContent   = "—";
-    document.getElementById("attr-" + i).classList.remove("show");
+    document.getElementById("attr-" + i + "-icon").innerHTML = attrs[i - 1].icon;
+    document.getElementById("attr-" + i + "-label").textContent = attrs[i - 1].label;
   }
 
-  // Radar: only visible for high-profiling conditions
-  var radar      = document.getElementById("radar-chart");
-  var radarLabel = document.getElementById("radar-label");
-  if (config.pr === "high") {
-    radar.style.display      = "block";
-    radarLabel.style.display = "block";
+  // ── RADAR VISIBILITY ──
+  var radar = document.getElementById("radar-chart");
+  var radarLabel = document.querySelector(".radar-label");
+
+  if (config.pr === "low") {
+  if (radar) radar.style.display = "none";
+  if (radarLabel) radarLabel.style.display = "none";
   } else {
-    radar.style.display      = "none";
-    radarLabel.style.display = "none";
+  if (radar) radar.style.display = "block";
+  if (radarLabel) radarLabel.style.display = "block";
   }
 }
-
 // ── RADAR CHART ──
 function initRadarChart() {
-  if (config.pr !== "high") return;
-  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  if(config.pr !== "high") return;
 
   var attrs  = PROFILE_ATTRS[config.ds];
-  var labels = attrs.map(function(a){ return a.radarLabel; });
+  var labels = attrs.map(function(a){return a.radarLabel;});
   var colors = RADAR_COLORS[config.ds];
-  var ctx    = document.getElementById("radar-chart").getContext("2d");
 
+  var ctx = document.getElementById("radar-chart").getContext("2d");
   radarChart = new Chart(ctx, {
     type: "radar",
     data: {
       labels: labels,
       datasets:[{
         data: [1,1,1,1],
-        backgroundColor:    colors.fill,
-        borderColor:        colors.stroke,
-        borderWidth:        1.5,
+        backgroundColor: colors.fill,
+        borderColor:     colors.stroke,
+        borderWidth: 1.5,
         pointBackgroundColor: colors.stroke,
-        pointRadius:        3
+        pointRadius: 3
       }]
     },
     options: {
@@ -777,8 +810,8 @@ function initRadarChart() {
         min:0, max:10,
         ticks:{ display:false, stepSize:2 },
         pointLabels:{ font:{size:9,family:"DM Sans"}, color:"#666" },
-        grid:       { color:"rgba(255,255,255,0.08)" },
-        angleLines: { color:"rgba(255,255,255,0.08)" }
+        grid:{ color:"rgba(255,255,255,0.08)" },
+        angleLines:{ color:"rgba(255,255,255,0.08)" }
       }},
       plugins:{ legend:{ display:false } },
       animation:{ duration:600 }
@@ -786,80 +819,102 @@ function initRadarChart() {
   });
 }
 
-// ── PROFILE INFERENCE ──
-function inferProfile(questionIndex, answer) {
-  // questionIndex is 0-based (0 = first question)
+function inferProfile(turnNumber, answer) {
   if (!answer) return "—";
+
   var a = answer.toLowerCase();
 
-  if (config.ds === "low") {
-    if (questionIndex === 0) {
-      if (a.includes("dog"))   return "Loyal, social personality";
-      if (a.includes("cat"))   return "Independent, calm personality";
-      if (a.includes("lion"))  return "Bold, dominant traits";
-      return "Unique personality traits inferred";
-    }
-    if (questionIndex === 1) {
-      if (a.includes("morning")) return "Structured, disciplined routine";
-      if (a.includes("evening")) return "Relaxed, reflective lifestyle";
-      return "Flexible daily pattern";
-    }
-    if (questionIndex === 2) {
-      if (a.includes("winter")) return "Prefers calm environments";
-      if (a.includes("summer")) return "Energetic, outgoing";
-      if (a.includes("rain"))   return "Introspective tendencies";
-      return "Balanced seasonal preference";
-    }
-    if (questionIndex === 3) {
-      if (a.includes("blue")) return "Trust-oriented personality";
-      if (a.includes("red"))  return "Energetic, bold traits";
-      return "Distinct aesthetic preference";
-    }
-  }
+  // 🚨 ONLY check PR (not DS)
+  if (config.pr === "high") {
 
-  if (config.ds === "high") {
-    var labels = ["Location pattern analyzed","Income bracket classified",
-                  "Financial risk profile calculated","Health-related profile composed"];
-    return labels[questionIndex] || "—";
+    // LOW sensitivity style inference
+    if (config.ds === "low") {
+      if (turnNumber === 1) {
+        if (a.includes("dog")) return "Loyal, social personality";
+        if (a.includes("cat")) return "Independent, calm personality";
+        if (a.includes("lion")) return "Bold, dominant traits";
+        return "Unique personality traits inferred";
+      }
+
+      if (turnNumber === 2) {
+        if (a.includes("morning")) return "Structured, disciplined routine";
+        if (a.includes("evening")) return "Relaxed, reflective lifestyle";
+        return "Flexible daily pattern";
+      }
+
+      if (turnNumber === 3) {
+        if (a.includes("winter")) return "Prefers calm environments";
+        if (a.includes("summer")) return "Energetic, outgoing";
+        if (a.includes("rain")) return "Introspective tendencies";
+        return "Balanced seasonal preference";
+      }
+
+      if (turnNumber === 4) {
+        if (a.includes("blue")) return "Trust-oriented personality";
+        if (a.includes("red")) return "Energetic, bold traits";
+        return "Distinct aesthetic preference";
+      }
+    }
+
+    // HIGH sensitivity → ALSO infer (currently missing proper logic)
+    if (config.ds === "high") {
+      if (turnNumber === 1) return "Location pattern analyzed";
+      if (turnNumber === 2) return "Income bracket classified";
+      if (turnNumber === 3) return "Financial risk profile calculated";
+      if (turnNumber === 4) return "Health-related profile composed";
+    }
   }
 
   return "—";
 }
 
-// ── UPDATE SIDEBAR ──
-// FIX: use 0-based questionIndex (= questionsAnswered at time of submission)
-function updateSidebar(questionIndex, userAnswer) {
-  var attrNum = questionIndex + 1;  // attr-1 through attr-4
-  var row     = document.getElementById("attr-" + attrNum);
-  var valEl   = document.getElementById("attr-" + attrNum + "-val");
+// ── UPDATE SIDEBAR after user turn ──
+// turnNumber is 1-based (1=first question, 4=last question)
+function updateSidebar(turnNumber, userAnswer) {
 
-  if (row)   row.classList.add("show");
-  if (!valEl) return;
+  var row = document.getElementById("attr-" + turnNumber);
+  var valEl = document.getElementById("attr-" + turnNumber + "-val");
 
-  if (config.pr === "low") {
-    valEl.innerHTML =
-      '<div style="font-weight:500;">Response noted</div>' +
-      '<div style="font-size:11px;color:#999;">No profiling</div>';
-  } else {
-    var inferred = inferProfile(questionIndex, userAnswer);
-    var display  = (userAnswer && userAnswer.length > 20)
-      ? userAnswer.substring(0,18) + "..."
-      : (userAnswer || "—");
-
-    setTimeout(function(){
-      valEl.innerHTML =
-        '<div style="font-size:11px;color:#999;">' + display + '</div>' +
-        '<div style="font-weight:600;">' + inferred + '</div>';
-    }, 500);
+  if (row) {
+    row.classList.add("show");
   }
 
-  // Update radar for high-profiling conditions
+  if (valEl) {
+
+    // LOW PR → just log interaction
+    if (config.pr === "low") {
+
+      valEl.innerHTML =
+      '<div style="font-weight:500;">Response noted</div>' +
+      '<div style="font-size:11px;color:#999;">No profiling</div>';
+
+
+    } else {
+      // HIGH PR → inference (your existing logic)
+
+      var inferred = inferProfile(turnNumber, userAnswer);
+
+      var display = userAnswer && userAnswer.length > 20
+        ? userAnswer.substring(0, 18) + "..."
+        : (userAnswer || "—");
+
+      setTimeout(function () {
+        valEl.innerHTML =
+          '<div style="font-size:11px;color:#999;">' + display + '</div>' +
+          '<div style="font-weight:600;">' + inferred + '</div>';
+      }, 500);
+    }
+  }
+
+  // Radar ONLY for high PR
   if (config.pr === "high" && radarChart) {
-    var baseVals = [7,8,6,9];
-    var vals     = [1,1,1,1];
-    for (var i = 0; i <= questionIndex; i++) {
+    var baseVals = [7, 8, 6, 9];
+    var vals = [1, 1, 1, 1];
+
+    for (var i = 0; i < turnNumber; i++) {
       vals[i] = baseVals[i];
     }
+
     radarChart.data.datasets[0].data = vals;
     radarChart.update();
   }
@@ -867,162 +922,188 @@ function updateSidebar(questionIndex, userAnswer) {
 
 // ── START CONVERSATION ──
 function startConversation() {
-  // Reset all state counters for a clean run
-  messages          = [];
-  userTurns         = 0;
-  questionsAnswered = 0;
-  attemptsOnCurrent = 0;
-  userAnswers       = ["","","",""];
-  isWaiting         = false;
-  document.getElementById("messages").innerHTML = "";
-  document.getElementById("turn-display").textContent = "1";
-  document.getElementById("input-hint").textContent = "Exchange 1 of 4";
+  messages = [{ role:"system", content: SYSTEM_PROMPTS[config.ds] }];
+  // Add a silent trigger so the Anthropic API receives a non-empty messages array.
+  // Without this, filtering out the system message leaves messages:[] which causes a 400 error.
+  messages.push({ role:"user", content:"Hello, please begin." });
   setInputEnabled(false);
-
-  // Silent trigger so the AI can open with Q1
-  messages.push({role:"user", content:"Hello, please begin."});
-  callAI();
+  callOpenAI();
 }
 
-// ── AI API CALL ──
-// Sends to /api/chat — your backend should forward to OpenAI or Anthropic
-// and return { choices:[{message:{content:"..."}}] } (OpenAI-compatible shape)
-// OR { content:[{type:"text",text:"..."}] } (Anthropic shape).
-// Both are handled below.
-function callAI() {
+// ── OPENAI API CALL ──
+function callOpenAI() {
   isWaiting = true;
   setInputEnabled(false);
   showTyping();
 
-  // Build the messages array to send (prepend system prompt separately)
-  var payload = {
-    system:   SYSTEM_PROMPTS[config.ds],
-    messages: messages.slice()   // send the full history each time
-  };
+  // Build OpenAI-format messages array (system prompt + conversation history)
+  var oaiMessages = [{role:"system", content: SYSTEM_PROMPTS[config.ds]}];
+  messages.filter(function(m){return m.role !== "system";}).forEach(function(m){ oaiMessages.push(m); });
 
   fetch("/api/chat", {
-    method:  "POST",
-    headers: {"Content-Type":"application/json"},
-    body:    JSON.stringify(payload)
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    messages: oaiMessages
   })
-  .then(function(res){
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return res.json();
-  })
+})
+    
+  .then(function(res){ return res.json(); })
   .then(function(data){
-    removeTyping();
+  removeTyping();
 
-    // ── Parse response — handle both OpenAI and Anthropic shapes ──
-    var aiText = "";
-    if (data.error) {
-      console.error("Backend error:", data.error);
-      aiText = "⚠️ Error: " + data.error;
-    } else if (data.choices && data.choices[0] && data.choices[0].message) {
-      // OpenAI shape
-      aiText = data.choices[0].message.content.trim();
-    } else if (Array.isArray(data.content) && data.content[0]) {
-      // Anthropic shape
-      aiText = (data.content[0].text || "").trim();
-    } else {
-      console.error("Unexpected response shape:", data);
-      aiText = "⚠️ No valid response received.";
-    }
+  var aiText = "";
 
-    var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
-    aiText = aiText.replace(/\[ADVANCE\]/g, "").trim();
+  if (data.error) {
+    console.error("Backend error:", data.error);
+    aiText = "⚠️ Error: " + data.error;
+  }
+  else if (data.choices && data.choices[0] && data.choices[0].message) {
+    aiText = data.choices[0].message.content.trim();
+  }
+  else {
+    console.error("Unexpected response:", data);
+    aiText = "⚠️ No valid response received.";
+  }
 
-    messages.push({role:"assistant", content:aiText});
-    addAIMessage(aiText);
+  var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
+  aiText = aiText.replace("[ADVANCE]", "").trim();
 
-    isWaiting = false;
+  messages.push({role:"assistant", content:aiText});
+  addAIMessage(aiText);
 
-    // ── ADVANCE LOGIC ──
-    if (didAdvance) {
+  isWaiting = false;
+
+  // ✅ HANDLE ADVANCE LOGIC
+  if (didAdvance) {
+    if (questionsAnswered < 4) {
       questionsAnswered++;
       attemptsOnCurrent = 0;
-    } else {
-      attemptsOnCurrent++;
+    }
+  } else {
+    attemptsOnCurrent++;
 
-      if (attemptsOnCurrent >= MAX_ATTEMPTS) {
-        // Force-advance: credit the current slot and move on
-        updateSidebar(questionsAnswered, userAnswers[questionsAnswered] || "—");
-        questionsAnswered++;
-        attemptsOnCurrent = 0;
+    if (attemptsOnCurrent >= MAX_ATTEMPTS) {
+      updateSidebar(questionsAnswered + 1, userAnswers[questionsAnswered] || "—");
+      questionsAnswered++;
+      attemptsOnCurrent = 0;
 
-        if (questionsAnswered < 4) {
-          messages.push({
-            role:"user",
-            content:"[SYSTEM: participant has used all attempts on this question. Move to next. Include [ADVANCE]]"
-          });
-          callAI();
-          return;
-        } else {
-          messages.push({
-            role:"user",
-            content:"[SYSTEM: all questions complete. Send closing message with [ADVANCE]]"
-          });
-          callAI();
-          return;
-        }
+      if (questionsAnswered < 4) {
+        messages.push({
+          role: "user",
+          content: "[SYSTEM: participant has used all attempts on this question. Move to next. Include [ADVANCE]]"
+        });
+        callOpenAI();
+        return;
+      } else {
+        messages.push({
+          role: "user",
+          content: "[SYSTEM: all questions complete. Send closing message with [ADVANCE]]"
+        });
+        callOpenAI();
+        return;
       }
     }
+  }
 
-    // ── COMPLETION CHECK ──
-    if (questionsAnswered >= 4) {
-      setInputEnabled(false);
-      document.getElementById("input-hint").textContent =
-        "Conversation complete — click below to continue.";
-      setTimeout(showCompleteButton, 300);
+  // ✅ COMPLETION
+  if (questionsAnswered >= 4) {
+    setInputEnabled(false);
 
-      // FIX: "data cleared" notice for low-confidentiality conditions
-      if (config.pc === "low") {
-        setTimeout(function(){
-          var msg = document.getElementById("data-cleared");
-          if (msg) msg.style.display = "block";
-        }, 800);
-      }
-    } else {
-      setInputEnabled(true);
-      document.getElementById("turn-display").textContent = questionsAnswered + 1;
+    document.getElementById("input-hint").textContent =
+      "Conversation complete — click below to continue.";
+
+    setTimeout(function () {
+      showCompleteButton();
+    }, 300);
+
+    if (config.pr === "low") {
+      setTimeout(function () {
+        var msg = document.getElementById("data-cleared");
+        if (msg) msg.style.display = "block";
+      }, 800);
     }
-  })
+  } else {
+    setInputEnabled(true);
+    document.getElementById("turn-display").textContent = questionsAnswered + 1;
+  }
+})
   .catch(function(err){
-    removeTyping();
-    isWaiting = false;
-    console.error("Network/fetch error:", err);
+  removeTyping();
+  isWaiting = false;
+  console.error("Fetch/network error:", err);
+
+  if (userTurns >= 4) {
+    setInputEnabled(false);
+
+    document.getElementById("input-hint").textContent =
+      "Conversation complete — click below to continue.";
+
+    // Show button
+    setTimeout(function () {
+      showCompleteButton();
+    }, 300);
+
+    // ✅ ADD THIS EXACTLY HERE
+    setTimeout(function () {
+      if (config.pr === "low") {
+        var msg = document.getElementById("data-cleared");
+        if (msg) msg.style.display = "block";
+      }
+    }, 800);
+
+  } else {
     addAIMessage("I am having trouble connecting. Please refresh the page and try again.");
     setInputEnabled(true);
-  });
+  }
+});
 }
 
 // ── SEND USER MESSAGE ──
 function sendMessage() {
   var input = document.getElementById("user-input");
   var text  = input.value.trim();
-  if (!text || isWaiting) return;
-
-  // Hard guard: ignore submissions past 4 raw turns
-  // FIX: removed the immediate redirect that was here — redirect
-  //      now happens only after AI sends the closing message and
-  //      user clicks the "Continue to Survey" button.
-  if (userTurns >= 4) return;
+  if(!text || isWaiting) return;
 
   input.value = "";
   autoResize(input);
   setInputEnabled(false);
 
-  // FIX: store answer keyed to the current question slot (not raw turn count)
-  // This ensures retries on the same question don't corrupt later slots.
-  userAnswers[questionsAnswered] = text;
+  // Hard block — never allow more raw submissions than questions
+  if (userTurns >= 4) return;
+
   userTurns++;
+if (userTurns === 4) {
+  console.log("Force redirect after 4 turns");
+
+var url = new URL(QUALTRICS_URL);
+
+url.searchParams.set("condition_id", condition);
+url.searchParams.set("Profiling", config.pr);
+url.searchParams.set("Sensitivity", config.ds);
+url.searchParams.set("Confidentiality", config.pc);
+url.searchParams.set("fromAI", "1");
+
+console.log("Redirect URL:", url.toString());
+
+// 🔥 FORCE redirect
+window.location.assign(url.toString());
+}
+  
+  // Store answer by current question index so retries don't overwrite wrong slot
+  userAnswers[userTurns - 1] = text;
 
   messages.push({role:"user", content:text});
-  addUserMessage(text);
+addUserMessage(text);
 
-  // FIX: pass questionsAnswered (0-based current slot) — not userTurns
-  updateSidebar(questionsAnswered, text);
+// 🔥 NEW: update sidebar immediately on user input
+if (userTurns <= 4) {
+  updateSidebar(userTurns, text);
+}
 
-  callAI();
+callOpenAI();
 }
 
 // ── DOM HELPERS ──
@@ -1034,7 +1115,7 @@ function addAIMessage(text) {
     '<div class="avatar ai">AI</div>' +
     '<div class="bubble ai">' +
       '<div class="name">ChatAI</div>' +
-      '<div class="text">' + esc(text) + '</div>' +
+      '<div class="text">'+esc(text)+'</div>' +
     '</div>';
   area.appendChild(row);
   scrollDown();
@@ -1046,7 +1127,7 @@ function addUserMessage(text) {
   row.className = "msg-row user";
   row.innerHTML =
     '<div class="bubble user-bubble">' +
-      '<div class="text">' + esc(text) + '</div>' +
+      '<div class="text">'+esc(text)+'</div>' +
     '</div>' +
     '<div class="avatar user">U</div>';
   area.appendChild(row);
@@ -1060,28 +1141,25 @@ function showTyping() {
   row.id = "typing-indicator";
   row.innerHTML =
     '<div class="avatar ai">AI</div>' +
-    '<div class="bubble ai"><div class="typing">' +
-      '<span></span><span></span><span></span>' +
-    '</div></div>';
+    '<div class="bubble ai"><div class="typing"><span></span><span></span><span></span></div></div>';
   area.appendChild(row);
   scrollDown();
 }
 
 function removeTyping() {
   var el = document.getElementById("typing-indicator");
-  if (el) el.remove();
+  if(el) el.remove();
 }
 
 function showCompleteButton() {
-  if (document.getElementById("complete-btn-wrap")) return;
+  // Guard: only show once
+  if(document.getElementById("complete-btn-wrap")) return;
   var area = document.getElementById("messages");
   var div  = document.createElement("div");
   div.id = "complete-btn-wrap";
   div.style.cssText = "max-width:740px;margin:16px auto;padding:0 18px;";
   div.innerHTML =
-    '<button onclick="endConversation()" style="width:100%;padding:12px 20px;' +
-    'background:#10a37f;color:white;border:none;border-radius:8px;' +
-    'font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;">' +
+    '<button onclick="endConversation()" style="width:100%;padding:12px 20px;background:#10a37f;color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;">' +
     'Continue to Survey →</button>';
   area.appendChild(div);
   scrollDown();
@@ -1101,13 +1179,13 @@ function setInputEnabled(enabled) {
 
 function autoResize(el) {
   el.style.height = "auto";
-  el.style.height = Math.min(el.scrollHeight, 120) + "px";
-  document.getElementById("send-btn").disabled =
-    el.value.trim() === "" || isWaiting;
+  el.style.height = Math.min(el.scrollHeight, 120)+"px";
+  // enable send button only if there is text
+  document.getElementById("send-btn").disabled = el.value.trim() === "" || isWaiting;
 }
 
 function handleKey(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if(e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
@@ -1119,7 +1197,7 @@ function esc(str) {
   return d.innerHTML;
 }
 
-// ── END & REDIRECT ──
+// ── END + REDIRECT ──
 function endConversation() {
   showScreen("screen-complete");
   startCountdown();
@@ -1131,23 +1209,26 @@ function startCountdown() {
   var t  = setInterval(function(){
     n--;
     el.textContent = n;
-    if (n <= 0) { clearInterval(t); goToQualtrics(); }
-  }, 1000);
+    if(n<=0){ clearInterval(t); goToQualtrics(); }
+  },1000);
 }
 
 function goToQualtrics() {
   var url = new URL(QUALTRICS_URL);
-  url.searchParams.set("condition_id",   condition);
-  url.searchParams.set("Profiling",      config.pr);
-  url.searchParams.set("Sensitivity",    config.ds);
-  url.searchParams.set("Confidentiality",config.pc);
-  url.searchParams.set("fromAI",         "1");
-  console.log("Redirect URL:", url.toString());
-  window.location.href = url.toString();
-}
 
-// ── BOOT ──
+  url.searchParams.set("condition_id", condition);
+  url.searchParams.set("Profiling", config.pr);
+  url.searchParams.set("Sensitivity", config.ds);
+  url.searchParams.set("Confidentiality", config.pc);
+  url.searchParams.set("fromAI", "1");
+
+  window.location.href = url.toString();
+  console.log("Redirect URL:", url.toString());
+}
+// ── START ──
 init();
 </script>
+
+  
 </body>
 </html>
