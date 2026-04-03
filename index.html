@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -380,10 +380,7 @@ body {
     </div>
     <h2>Before You Begin</h2>
     <p class="sub">Please read the following instructions carefully.</p>
-    <div id="privacy-box" class="card-body" style="border-left:3px solid #ef4444;">
-  <strong id="privacy-title"></strong>
-  <div id="privacy-body" style="margin-top:6px;"></div>
-</div>
+  
     <div class="card-body">
       You will have a short conversation with an AI assistant. The AI will ask you a few questions. Please answer naturally and honestly. After the conversation you will be asked to complete a brief survey about your experience.
     </div>
@@ -642,14 +639,13 @@ var RADAR_COLORS = {
 var condition        = 1;
 var config           = {};
 var messages         = [];   // OpenAI message history
-var userTurns        = 0;    // raw number of user submissions
 var questionsAnswered = 0;   // number of questions genuinely completed (advances only on [ADVANCE])
 var attemptsOnCurrent = 0;   // retry attempts on the current question (resets each time question advances)
 var MAX_ATTEMPTS      = 3;   // after this many failed attempts, force-advance to next question
 var isWaiting        = false;
 var radarChart       = null;
 var userAnswers      = ["","","",""];
-
+var TOTAL_QUESTIONS = 4;
 // ── INIT ──
 function init() {
   var params  = new URLSearchParams(window.location.search);
@@ -659,25 +655,6 @@ function init() {
       console.log("Condition:", condition);
       console.log("Config:", config);
 
-
-  // Privacy notice
-  var privacyData = {
-    low: {
-      title: "Data Notice",
-      body:  "Your conversation may be used to improve our services and shared with our partner network. Data handling practices are subject to our standard terms of service."
-    },
-    high: {
-      title: "Privacy Guarantee",
-      body:  "Your conversation is fully private and encrypted. No data is stored or shared with anyone. All conversation data is permanently deleted when this session ends."
-    }
-  };
- var titleEl = document.getElementById("privacy-title");
-var bodyEl  = document.getElementById("privacy-body");
-
-if (titleEl && bodyEl && privacyData[config.pc]) {
-  titleEl.textContent = privacyData[config.pc].title;
-  bodyEl.textContent  = privacyData[config.pc].body;
-}
 
 }
 
@@ -930,91 +907,13 @@ function startConversation() {
   callOpenAI();
 }
 
-// ── OPENAI API CALL ──
-function callOpenAI() {
-  isWaiting = true;
-  setInputEnabled(false);
-  showTyping();
-
-  // Build OpenAI-format messages array (system prompt + conversation history)
-  var oaiMessages = [{role:"system", content: SYSTEM_PROMPTS[config.ds]}];
-  messages.filter(function(m){return m.role !== "system";}).forEach(function(m){ oaiMessages.push(m); });
-
-  fetch("/api/chat", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    messages: oaiMessages
-  })
-})
-    
-  .then(function(res){ return res.json(); })
-  .then(function(data){
-  removeTyping();
-
-  var aiText = "";
-
-  if (data.error) {
-    console.error("Backend error:", data.error);
-    aiText = "⚠️ Error: " + data.error;
-  }
-  else if (data.choices && data.choices[0] && data.choices[0].message) {
-    aiText = data.choices[0].message.content.trim();
-  }
-  else {
-    console.error("Unexpected response:", data);
-    aiText = "⚠️ No valid response received.";
-  }
-
-  var didAdvance = aiText.indexOf("[ADVANCE]") !== -1;
-  aiText = aiText.replace("[ADVANCE]", "").trim();
-
-  messages.push({role:"assistant", content:aiText});
-  addAIMessage(aiText);
-
-  isWaiting = false;
-
-  // ✅ HANDLE ADVANCE LOGIC
-  if (didAdvance) {
-    if (questionsAnswered < 4) {
-      questionsAnswered++;
-      attemptsOnCurrent = 0;
-    }
-  } else {
-    attemptsOnCurrent++;
-
-    if (attemptsOnCurrent >= MAX_ATTEMPTS) {
-      updateSidebar(questionsAnswered + 1, userAnswers[questionsAnswered] || "—");
-      questionsAnswered++;
-      attemptsOnCurrent = 0;
-
-      if (questionsAnswered < 4) {
-        messages.push({
-          role: "user",
-          content: "[SYSTEM: participant has used all attempts on this question. Move to next. Include [ADVANCE]]"
-        });
-        callOpenAI();
-        return;
-      } else {
-        messages.push({
-          role: "user",
-          content: "[SYSTEM: all questions complete. Send closing message with [ADVANCE]]"
-        });
-        callOpenAI();
-        return;
-      }
-    }
-  }
-
-  // ✅ COMPLETION
-  if (questionsAnswered >= 4) {
+function checkCompletion() {
+  if (questionsAnswered >= TOTAL_QUESTIONS) { 
     setInputEnabled(false);
 
     document.getElementById("input-hint").textContent =
       "Conversation complete — click below to continue.";
-
+      console.log("SHOWING COMPLETE BUTTON NOW");
     setTimeout(function () {
       showCompleteButton();
     }, 300);
@@ -1025,87 +924,172 @@ function callOpenAI() {
         if (msg) msg.style.display = "block";
       }, 800);
     }
-  } else {
-    setInputEnabled(true);
-    document.getElementById("turn-display").textContent = questionsAnswered + 1;
+
+    return true;
   }
-})
-  .catch(function(err){
-  removeTyping();
-  isWaiting = false;
-  console.error("Fetch/network error:", err);
-
-  if (userTurns >= 4) {
-    setInputEnabled(false);
-
-    document.getElementById("input-hint").textContent =
-      "Conversation complete — click below to continue.";
-
-    // Show button
-    setTimeout(function () {
-      showCompleteButton();
-    }, 300);
-
-    // ✅ ADD THIS EXACTLY HERE
-    setTimeout(function () {
-      if (config.pr === "low") {
-        var msg = document.getElementById("data-cleared");
-        if (msg) msg.style.display = "block";
-      }
-    }, 800);
-
-  } else {
-    addAIMessage("I am having trouble connecting. Please refresh the page and try again.");
-    setInputEnabled(true);
-  }
-});
+  return false;
 }
 
+function callOpenAI() {
+  isWaiting = true;
+  setInputEnabled(false);
+  showTyping();
+
+  // Build OpenAI messages
+  var oaiMessages = [
+    { role: "system", content: SYSTEM_PROMPTS[config.ds] }
+  ];
+
+  messages
+    .filter(function (m) { return m.role !== "system"; })
+    .forEach(function (m) {
+      oaiMessages.push(m);
+    });
+
+  fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ messages: oaiMessages })
+  })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      removeTyping();
+
+      var aiText = "";
+
+      if (data.error) {
+        console.error(data.error);
+        aiText = "⚠️ Error: " + JSON.stringify(data.error);
+
+      } else if (data.choices && data.choices[0] && data.choices[0].message) {
+        aiText = data.choices[0].message.content.trim();
+
+      } else {
+        console.error("Bad response:", data);
+        aiText = "⚠️ No response received.";
+      }
+
+      // ADVANCE detection (robust)
+      var didAdvance = aiText.toUpperCase().includes("ADVANCE");
+      aiText = aiText.replace(/\[?\s*ADVANCE\s*\]?/gi, "").trim();
+
+      console.log("AI RAW:", aiText);
+      console.log("ADVANCE DETECTED:", didAdvance);
+      console.log("questionsAnswered:", questionsAnswered);
+
+      // Save + render AI message
+      messages.push({ role: "assistant", content: aiText });
+      addAIMessage(aiText);
+
+      isWaiting = false;
+
+      // =========================
+      // STATE UPDATE (ONLY ONCE)
+      // =========================
+
+      if (didAdvance || questionsAnswered < TOTAL_QUESTIONS) {
+        attemptsOnCurrent = 0;
+
+      } else {
+        attemptsOnCurrent++;
+
+        if (attemptsOnCurrent < MAX_ATTEMPTS) {
+          setInputEnabled(true);
+
+          document.getElementById("turn-display").textContent =
+            (questionsAnswered + 1) +
+            " (attempt " +
+            attemptsOnCurrent +
+            "/" +
+            MAX_ATTEMPTS +
+            ")";
+
+          return;
+        }
+
+        // max attempts → retry without incrementing question
+        attemptsOnCurrent = 0;
+
+        messages.push({
+          role: "user",
+          content: "[SYSTEM: max retries reached, move to next question]"
+        });
+
+        callOpenAI();
+        return;
+      }
+      document.getElementById("turn-display").textContent =
+        questionsAnswered + 1;
+
+      // =========================
+      // COMPLETION (ONLY PLACE)
+      // =========================
+
+      if (questionsAnswered >= TOTAL_QUESTIONS) {
+        setInputEnabled(false);
+
+        document.getElementById("input-hint").textContent =
+          "Conversation complete — click below to continue.";
+
+        console.log("COMPLETED");
+
+        setTimeout(function () {
+          showCompleteButton();
+        }, 300);
+
+        if (config.pr === "low") {
+          setTimeout(function () {
+            var msg = document.getElementById("data-cleared");
+            if (msg) msg.style.display = "block";
+          }, 800);
+        }
+
+      } 
+      else {
+        setInputEnabled(true);
+      }
+    })
+    .catch(function (err) {
+      removeTyping();
+      isWaiting = false;
+      console.error(err);
+
+      addAIMessage(
+        "Network error. Please refresh and try again."
+      );
+
+      setInputEnabled(true);
+    });
+}
 // ── SEND USER MESSAGE ──
 function sendMessage() {
   var input = document.getElementById("user-input");
   var text  = input.value.trim();
-  if(!text || isWaiting) return;
+
+  if (!text || isWaiting) return;
 
   input.value = "";
   autoResize(input);
   setInputEnabled(false);
 
-  // Hard block — never allow more raw submissions than questions
-  if (userTurns >= 4) return;
+  if (questionsAnswered >= TOTAL_QUESTIONS) return;
 
-  userTurns++;
-if (userTurns === 4) {
-  console.log("Force redirect after 4 turns");
+  // ✅ STORE ANSWER
+  userAnswers[questionsAnswered] = text;
 
-var url = new URL(QUALTRICS_URL);
+  // ✅ UPDATE SIDEBAR HERE (correct timing)
+  updateSidebar(questionsAnswered + 1, text);
 
-url.searchParams.set("condition_id", condition);
-url.searchParams.set("Profiling", config.pr);
-url.searchParams.set("Sensitivity", config.ds);
-url.searchParams.set("Confidentiality", config.pc);
-url.searchParams.set("fromAI", "1");
+  // ✅ NOW increment (ONLY HERE)
+  questionsAnswered++;
 
-console.log("Redirect URL:", url.toString());
+  messages.push({ role: "user", content: text });
+  addUserMessage(text);
 
-// 🔥 FORCE redirect
-window.location.assign(url.toString());
+  callOpenAI();
 }
-  
-  // Store answer by current question index so retries don't overwrite wrong slot
-  userAnswers[userTurns - 1] = text;
-
-  messages.push({role:"user", content:text});
-addUserMessage(text);
-
-// 🔥 NEW: update sidebar immediately on user input
-if (userTurns <= 4) {
-  updateSidebar(userTurns, text);
-}
-
-callOpenAI();
-}
-
 // ── DOM HELPERS ──
 function addAIMessage(text) {
   var area = document.getElementById("messages");
