@@ -521,6 +521,19 @@ body {
 var QUALTRICS_URL    = "https://iimb.qualtrics.com/jfe/form/SV_8l8bEPkRj2DPbU2";
 // ══════════════════════════════════
 
+
+var CONDITION_TOKENS = {
+  "x7k2p": 1,
+  "m9qr4t": 2,
+  "b3wn8z": 3,
+  "p5jh2v": 4,
+  "t8ck6r": 5,
+  "n2xm7q": 6,
+  "w4fb9s": 7,
+  "r6yd3k": 8
+};
+
+
 // ── CONDITION MAP ──
 var CONDITIONS = {
   1:{pr:"low", ds:"low", pc:"low"},
@@ -649,8 +662,8 @@ var TOTAL_QUESTIONS = 4;
 // ── INIT ──
 function init() {
   var params  = new URLSearchParams(window.location.search);
-  var condNum = parseInt(params.get("condition")) || 1;
-  condition   = Math.min(Math.max(condNum,1),8);
+  var token = params.get("c");
+  condition = CONDITION_TOKENS[token] || 1;
   config      = CONDITIONS[condition];
       console.log("Condition:", condition);
       console.log("Config:", config);
