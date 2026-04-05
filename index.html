@@ -127,12 +127,25 @@ body {
   background:#2d1515;
   border-bottom:1px solid #5a2020;
   color:#fca5a5;
+  animation: flashLow 2.5s infinite;
 }
 .top-bar.pc-high {
   background:#0f2a1f;
   border-bottom:1px solid #1a4d36;
   color:#6ee7b7;
+  animation: flashHigh 2.5s infinite;
 }
+
+@keyframes flashLow {
+  0%,100% { background:#2d1515; }
+  50%      { background:#4a1f1f; }
+}
+
+@keyframes flashHigh {
+  0%,100% { background:#0f2a1f; }
+  50%      { background:#1a3d2e; }
+}
+
 .top-bar svg { width:14px;height:14px;flex-shrink:0; }
 
 /* chat header */
@@ -1167,7 +1180,7 @@ function sendMessage() {
       setTimeout(function () {
         var msg = document.getElementById("data-cleared");
         if (msg) msg.style.display = "block";
-      }, 800);
+      }, 2500);
     }
     return;
   }
@@ -1176,7 +1189,9 @@ function sendMessage() {
   // NORMAL FLOW
   // =========================
   messages.push({ role: "user", content: "[SYSTEM: participant has used all attempts on this question, please move to the next question]" });
-  callOpenAI();
+  setTimeout(function() {
+    callOpenAI();
+  }, 2000);
 }
 
 // ── DOM HELPERS ──
