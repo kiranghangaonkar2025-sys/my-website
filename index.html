@@ -578,9 +578,9 @@ IMPORTANT:
 
 You have exactly 4 questions to ask, in this fixed order:
 Q1: "Hi! I am your AI assistant. To get to know you better — which city are you currently living in?"
-Q2: "What is your current monthly income range?"
-Q3: "Do you currently have any outstanding loans or debts?"
-Q4: "Are you currently taking any prescription medications on a regular basis?"
+Q2: "How would you describe your monthly income - low, medium, or high?"
+Q3: "Do you currently have any outstanding loans or debts? If yes, what kind of loan is it - home loan, education loan, something else?"
+Q4: "Are you currently taking any prescription medications on a regular basis? If yes, for what eliments are you taking pills for?"
 
 RESPONSE RULES — follow these exactly:
 
@@ -886,13 +886,9 @@ function updateSidebar(turnNumber, userAnswer) {
   // Radar ONLY for high PR
   if (config.pr === "high" && radarChart) {
     var baseVals = [7, 8, 6, 9];
-    var vals = [1, 1, 1, 1];
-
-    for (var i = 0; i < turnNumber; i++) {
-      vals[i] = baseVals[i];
-    }
-
-    radarChart.data.datasets[0].data = vals;
+    var currentData = radarChart.data.datasets[0].data;
+    currentData[turnNumber - 1] = baseVals[turnNumber - 1];
+    radarChart.data.datasets[0].data = currentData;
     radarChart.update();
   }
 }
@@ -1063,6 +1059,34 @@ function callOpenAI() {
       setInputEnabled(true);
     });
 }
+
+function isGibberish(text) {
+  text = text.trim().toLowerCase();
+
+  // Too short
+  if (text.length < 2) return true;
+
+  // Numbers only
+  if (/^[0-9]+$/.test(text)) return true;
+
+  // Mostly numbers (e.g. "423e")
+  if ((text.match(/[0-9]/g) || []).length > text.length / 2) return true;
+
+  // Repeated single char (e.g. "aaaa")
+  if (/^(.)\1+$/.test(text)) return true;
+
+  // No vowels at all — catches "nkd", "xkz", "bcd"
+  if (!/[aeiou]/.test(text)) return true;
+
+  // Short string mixing letters + numbers — catches "xya2", "ab3c"
+  if (text.length <= 6 && /[0-9]/.test(text) && /[a-z]/.test(text)) return true;
+
+  // 5+ consecutive consonants — catches "xyzpqr", "bstrkpf"
+  if (/[^aeiou\s]{5,}/.test(text)) return true;
+
+  return false;
+}
+
 // ── SEND USER MESSAGE ──
 function sendMessage() {
   var input = document.getElementById("user-input");
@@ -1076,20 +1100,72 @@ function sendMessage() {
 
   if (questionsAnswered >= TOTAL_QUESTIONS) return;
 
-  // ✅ STORE ANSWER
-  userAnswers[questionsAnswered] = text;
+  // =========================
+  // GIBBERISH CHECK FIRST
+  // =========================
+  if (isGibberish(text)) {
 
-  // ✅ UPDATE SIDEBAR HERE (correct timing)
-  updateSidebar(questionsAnswered + 1, text);
+    attemptsOnCurrent++;
 
-  // ✅ NOW increment (ONLY HERE)
-  questionsAnswered++;
+    if (attemptsOnCurrent < MAX_ATTEMPTS) {
+      addAIMessage("Hmm, I didn’t quite catch that — could you try answering the question again?");
+      setInputEnabled(true);
+      return; // ⛔ STOP — no progression
+    }
 
-  messages.push({ role: "user", content: text });
-  addUserMessage(text);
+    // ✅ Max attempts reached → move forward WITHOUT storing
+    addAIMessage("No worries — let’s move on!");
+    attemptsOnCurrent = 0;
 
+    questionsAnswered++;
+
+  } else {
+
+    // =========================
+    // VALID ANSWER
+    // =========================
+    userAnswers[questionsAnswered] = text;
+    var currentTurn = questionsAnswered + 1;
+    var currentText = text;
+    setTimeout(function() {
+      updateSidebar(currentTurn, currentText);
+    }, 1500);
+
+    attemptsOnCurrent = 0;
+
+    // ✅ Only valid answers go to AI
+    messages.push({ role: "user", content: text });
+    addUserMessage(text);
+
+    questionsAnswered++;
+  }
+
+  // =========================
+  // COMPLETION CHECK (CRITICAL FIX)
+  // =========================
+  if (questionsAnswered >= TOTAL_QUESTIONS) {
+    setInputEnabled(false);
+    document.getElementById("input-hint").textContent =
+    "Conversation complete — click below to continue.";
+    setTimeout(function () {
+      showCompleteButton();
+    }, 300);
+    if (config.pr === "low") {
+      setTimeout(function () {
+        var msg = document.getElementById("data-cleared");
+        if (msg) msg.style.display = "block";
+      }, 800);
+    }
+    return;
+  }
+
+  // =========================
+  // NORMAL FLOW
+  // =========================
+  messages.push({ role: "user", content: "[SYSTEM: participant has used all attempts on this question, please move to the next question]" });
   callOpenAI();
 }
+
 // ── DOM HELPERS ──
 function addAIMessage(text) {
   var area = document.getElementById("messages");
@@ -1205,6 +1281,7 @@ function goToQualtrics() {
   url.searchParams.set("Sensitivity", config.ds);
   url.searchParams.set("Confidentiality", config.pc);
   url.searchParams.set("fromAI", "1");
+  url.searchParams.set("answers", JSON.stringify(userAnswers));
 
   window.location.href = url.toString();
   console.log("Redirect URL:", url.toString());
