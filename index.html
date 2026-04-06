@@ -669,15 +669,13 @@ var TOTAL_QUESTIONS = 4;
 // ── INIT ──
 function init() {
   var params  = new URLSearchParams(window.location.search);
-  var token   = params.get("c");
-  var condNum = parseInt(params.get("condition"));
+  var token   = params.get("c") || params.get("condition");
 
   if (token && CONDITION_TOKENS[token]) {
     condition = CONDITION_TOKENS[token];
-  } else if (condNum && condNum >= 1 && condNum <= 8) {
-    condition = condNum;
   } else {
-    condition = 1;
+    var condNum = parseInt(token);
+    condition = (condNum >= 1 && condNum <= 8) ? condNum : 1;
   }
 
   config = CONDITIONS[condition];
