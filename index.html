@@ -669,13 +669,20 @@ var TOTAL_QUESTIONS = 4;
 // ── INIT ──
 function init() {
   var params  = new URLSearchParams(window.location.search);
-  var token = params.get("c");
-  condition = CONDITION_TOKENS[token] || 1;
-  config      = CONDITIONS[condition];
-      console.log("Condition:", condition);
-      console.log("Config:", config);
+  var token   = params.get("c");
+  var condNum = parseInt(params.get("condition"));
 
+  if (token && CONDITION_TOKENS[token]) {
+    condition = CONDITION_TOKENS[token];
+  } else if (condNum && condNum >= 1 && condNum <= 8) {
+    condition = condNum;
+  } else {
+    condition = 1;
+  }
 
+  config = CONDITIONS[condition];
+  console.log("Condition:", condition);
+  console.log("Config:", config);
 }
 
 // ── NAVIGATION ──
@@ -1180,12 +1187,11 @@ function sendMessage() {
   }
 
   // =========================
-  // NORMAL FLOW
-  // =========================
-  messages.push({ role: "user", content: "[SYSTEM: participant has used all attempts on this question, please move to the next question]" });
-  setTimeout(function() {
-    callOpenAI();
-  }, 2000);
+// NORMAL FLOW
+// =========================
+setTimeout(function() {
+  callOpenAI();
+}, 2000);
 }
 
 // ── DOM HELPERS ──
